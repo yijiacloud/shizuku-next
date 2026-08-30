@@ -3,35 +3,27 @@ package moe.shizuku.manager.shell
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.Editable
-import android.text.TextWatcher
-import android.text.SpannableStringBuilder
+import android.os.ParcelFileDescriptor
 import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.graphics.Typeface
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.edit
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
 import moe.shizuku.manager.R
 import moe.shizuku.manager.app.AppBarActivity
 import moe.shizuku.manager.databinding.ActivityShellTerminalBinding
 import rikka.shizuku.Shizuku
-import android.os.ParcelFileDescriptor
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.OutputStream
 import java.util.concurrent.Executors
 
 class ShellTerminalActivity : AppBarActivity() {
@@ -42,24 +34,13 @@ class ShellTerminalActivity : AppBarActivity() {
         private const val MAX_HISTORY = 50
         private const val MAX_OUTPUT_CHARS = 100_000
 
-        private val QUICK_COMMANDS = listOf(
-            "pm list packages" to "pm list",
-            "pm grant" to "pm grant",
-            "pm disable-user" to "pm disable",
-            "am force-stop" to "am stop",
-            "am start" to "am start",
-            "dumpsys activity" to "activity",
-            "dumpsys window" to "window",
-            "dumpsys package" to "pkg info",
-            "settings get" to "settings get",
-            "settings put" to "settings put",
-            "getprop" to "getprop",
-            "setprop" to "setprop",
-            "top -n 1" to "top",
-            "df -h" to "df",
-            "free -h" to "free",
-            "ls -la" to "ls -la"
-        )
+        // 颜色 — 必须带 0xFF 前缀（alpha=255），否则文字透明
+        private const val COLOR_PROMPT = 0xFF89B4FA.toInt()     // 蓝色 — 提示符
+        private const val COLOR_CMD = 0xFFF9E2AF.toInt()        // 黄色 — 用户输入的命令
+        private const val COLOR_OUTPUT = 0xFFCDD6F4.toInt()     // 浅色 — 标准输出
+        private const val COLOR_ERROR = 0xFFF38BA8.toInt()      // 红色 — 错误
+        private const val COLOR_INFO = 0xFFA6ADC8.toInt()       // 灰色 — 提示信息
+        private const val COLOR_EXITCODE = 0xFFF38BA8.toInt()   // 红色 — 非零退出码
     }
 
     private lateinit var binding: ActivityShellTerminalBinding
@@ -82,29 +63,15 @@ class ShellTerminalActivity : AppBarActivity() {
         }
 
         loadHistory()
-        setupQuickBar()
         setupInput()
 
-        appendOutput("Shizuku Next Terminal v1.0\n", color = 0x89b4fa, bold = true)
-        appendOutput("以 Shizuku 特权身份执行 Shell 命令。\n", color = 0xa6adc8)
-        appendOutput("输入命令并按回车执行，长按输入框可查看历史。\n\n", color = 0xa6adc8)
-        printPrompt()
-    }
+        // 隐藏快捷指令栏，界面更简洁
+        binding.quickBarScroll.visibility = View.GONE
 
-    private fun setupQuickBar() {
-        for ((cmd, label) in QUICK_COMMANDS) {
-            val chip = Chip(this).apply {
-                text = label
-                isCheckable = false
-                isClickable = true
-                setOnClickListener {
-                    binding.inputField.setText(cmd)
-                    binding.inputField.requestFocus()
-                    binding.inputField.setSelection(cmd.length)
-                }
-            }
-            binding.quickBar.addView(chip)
-        }
+        appendOutput("Shizuku Next 终端 v1.0\n", COLOR_PROMPT, bold = true)
+        appendOutput("以 Shizuku 特权身份执行 Shell 命令。\n", COLOR_INFO)
+        appendOutput("输入命令并按回车执行，↑↓ 键翻历史。\n\n", COLOR_INFO)
+        printPrompt()
     }
 
     private fun setupInput() {
@@ -165,10 +132,10 @@ class ShellTerminalActivity : AppBarActivity() {
 
         binding.inputField.setText("")
 
-        // Show the command in output
-        appendOutput(cmd + "\n", color = 0xf9e2af, bold = true)
+        // 在输出区显示用户输入的命令
+        appendOutput(cmd + "\n", COLOR_CMD, bold = true)
 
-        // Save to history
+        // 保存到历史
         if (commandHistory.isEmpty() || commandHistory.last() != cmd) {
             commandHistory.add(cmd)
             if (commandHistory.size > MAX_HISTORY) {
@@ -178,20 +145,20 @@ class ShellTerminalActivity : AppBarActivity() {
         }
         historyIndex = -1
 
-        // Check if Shizuku is running
+        // 检查 Shizuku 是否运行
         if (!Shizuku.pingBinder()) {
-            appendOutput("错误: Shizuku 服务未运行\n", color = 0xf38ba8, bold = true)
+            appendOutput("错误：Shizuku 服务未运行\n", COLOR_ERROR, bold = true)
             printPrompt()
             return
         }
 
-        // Execute via Shizuku
+        // 通过 Shizuku 执行命令
         executor.execute {
             try {
                 val binder = Shizuku.getBinder()
                 if (binder == null || !binder.pingBinder()) {
                     handler.post {
-                        appendOutput("错误: 无法获取 Shizuku Binder\n", color = 0xf38ba8)
+                        appendOutput("错误：无法获取 Shizuku Binder\n", COLOR_ERROR)
                         printPrompt()
                     }
                     return@execute
@@ -201,7 +168,6 @@ class ShellTerminalActivity : AppBarActivity() {
                 val parts = parseCommand(cmd)
                 val process = service.newProcess(parts, null, null)
 
-                val stdinFd = process.getOutputStream()
                 val stdoutFd = process.getInputStream()
                 val stderrFd = process.getErrorStream()
 
@@ -224,19 +190,19 @@ class ShellTerminalActivity : AppBarActivity() {
 
                 handler.post {
                     if (stdoutText.isNotEmpty()) {
-                        appendOutput(stdoutText.toString(), color = 0xcdd6f4)
+                        appendOutput(stdoutText.toString(), COLOR_OUTPUT)
                     }
                     if (stderrText.isNotEmpty()) {
-                        appendOutput(stderrText.toString(), color = 0xf9e2af)
+                        appendOutput(stderrText.toString(), COLOR_ERROR)
                     }
                     if (exitCode != 0) {
-                        appendOutput("[退出码: $exitCode]\n", color = 0xf38ba8)
+                        appendOutput("[退出码: $exitCode]\n", COLOR_EXITCODE)
                     }
                     printPrompt()
                 }
             } catch (e: Exception) {
                 handler.post {
-                    appendOutput("错误: ${e.message}\n", color = 0xf38ba8, bold = true)
+                    appendOutput("错误：${e.message}\n", COLOR_ERROR, bold = true)
                     printPrompt()
                 }
             }
@@ -244,7 +210,6 @@ class ShellTerminalActivity : AppBarActivity() {
     }
 
     private fun parseCommand(cmd: String): Array<String> {
-        // Simple shell-like parsing: split by spaces, respect quotes
         val result = mutableListOf<String>()
         val current = StringBuilder()
         var inQuote = false
@@ -276,15 +241,11 @@ class ShellTerminalActivity : AppBarActivity() {
             result.add(current.toString())
         }
 
-        // If no arguments, use sh -c
-        return if (result.size == 1) {
-            arrayOf("sh", "-c", cmd)
-        } else {
-            result.toTypedArray()
-        }
+        // 始终用 sh -c 执行，支持管道、重定向等
+        return arrayOf("sh", "-c", cmd)
     }
 
-    private fun appendOutput(text: String, color: Int = 0xcdd6f4, bold: Boolean = false) {
+    private fun appendOutput(text: String, color: Int = COLOR_OUTPUT, bold: Boolean = false) {
         val start = outputBuilder.length
         outputBuilder.append(text)
         val end = outputBuilder.length
@@ -294,7 +255,6 @@ class ShellTerminalActivity : AppBarActivity() {
             outputBuilder.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
 
-        // Trim if too large
         if (outputBuilder.length > MAX_OUTPUT_CHARS) {
             val excess = outputBuilder.length - MAX_OUTPUT_CHARS
             outputBuilder.delete(0, excess)
@@ -307,7 +267,7 @@ class ShellTerminalActivity : AppBarActivity() {
     }
 
     private fun printPrompt() {
-        appendOutput("$ ", color = 0x89b4fa, bold = true)
+        appendOutput("$ ", COLOR_PROMPT, bold = true)
     }
 
     private fun loadHistory() {
@@ -320,9 +280,7 @@ class ShellTerminalActivity : AppBarActivity() {
 
     private fun saveHistory() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit {
-            putString(KEY_HISTORY, commandHistory.joinToString("\n"))
-        }
+        prefs.edit().putString(KEY_HISTORY, commandHistory.joinToString("\n")).apply()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -334,7 +292,7 @@ class ShellTerminalActivity : AppBarActivity() {
             R.id.action_clear -> {
                 outputBuilder.clear()
                 binding.outputView.text = ""
-                appendOutput("已清除\n\n", color = 0xa6adc8)
+                appendOutput("已清除\n\n", COLOR_INFO)
                 printPrompt()
                 true
             }
@@ -349,10 +307,10 @@ class ShellTerminalActivity : AppBarActivity() {
                     Toast.makeText(this, R.string.terminal_no_history, Toast.LENGTH_SHORT).show()
                 } else {
                     val sb = StringBuilder("命令历史:\n")
-                    commandHistory.forEachIndexed { i, cmd ->
-                        sb.append("${i + 1}. $cmd\n")
+                    commandHistory.forEachIndexed { i, c ->
+                        sb.append("${i + 1}. $c\n")
                     }
-                    appendOutput("\n${sb}\n", color = 0x89b4fa)
+                    appendOutput("\n${sb}\n", COLOR_PROMPT)
                     printPrompt()
                 }
                 true

@@ -94,8 +94,8 @@
     <string name="terminal_history">历史</string>
     <string name="terminal_copied">已复制到剪贴板</string>
     <string name="terminal_no_history">暂无命令历史</string>
-    <string name="home_terminal_title">Use Shizuku in terminal apps</string>
-    <string name="home_terminal_description">Run commands through Shizuku in terminal apps you like</string>
+    <string name="home_terminal_title">终端使用</string>
+    <string name="home_terminal_description">在应用内直接执行 Shell 命令</string>
     <string name="terminal_tutorial_1">First, Export files to any where you want. You will find two files, %1$s and %2$s.</string>
     <string name="terminal_tutorial_1_description">If there are files with the same name in the selected folder, they will be deleted.\n\nThe export function uses SAF (Storage Access Framework). It\'s reported that MIUI breaks the functions of SAF. If you are using MIUI, you may have to extract the file from Shizuku\'s apk or download from GitHub.</string>
     <string name="terminal_export_files">Export files</string>
