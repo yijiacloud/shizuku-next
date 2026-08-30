@@ -1,0 +1,9 @@
+# 示例模块属性文件
+# 每行格式：key=value
+# id 只能包含字母、数字、下划线和连字符
+id=example_module
+name=示例模块
+version=v1.0.0
+versionCode=1
+author=Shizuku Next
+description=这是一个 Shizuku Next 示例模块，演示模块系统的基本功能。安装后会自动执行 install.sh，可以通过配置页面查看模块信息和执行操作脚本。

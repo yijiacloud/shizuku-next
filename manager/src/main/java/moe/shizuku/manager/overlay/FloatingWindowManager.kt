@@ -90,8 +90,8 @@ object FloatingWindowManager {
      * 更新悬浮窗提示状态
      */
     fun updateHint(context: Context, state: Int, hint: String? = null) {
-        val intent = Intent(FloatingWindowService.ACTION_UPDATE_HINT).apply {
-            setPackage(context.packageName)
+        val intent = Intent(context, FloatingWindowService::class.java).apply {
+            action = FloatingWindowService.ACTION_UPDATE_HINT
             putExtra(FloatingWindowService.EXTRA_STATE, state)
             if (hint != null) {
                 putExtra(FloatingWindowService.EXTRA_HINT, hint)
@@ -105,8 +105,8 @@ object FloatingWindowManager {
      * 悬浮窗会进入"等待配对码"状态
      */
     fun startPairing(context: Context) {
-        val intent = Intent(FloatingWindowService.ACTION_START_PAIRING).apply {
-            setPackage(context.packageName)
+        val intent = Intent(context, FloatingWindowService::class.java).apply {
+            action = FloatingWindowService.ACTION_START_PAIRING
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)

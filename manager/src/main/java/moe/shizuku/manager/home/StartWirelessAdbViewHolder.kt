@@ -17,7 +17,7 @@ import moe.shizuku.manager.adb.AdbPairingTutorialActivity
 import moe.shizuku.manager.databinding.HomeItemContainerBinding
 import moe.shizuku.manager.databinding.HomeStartWirelessAdbBinding
 import moe.shizuku.manager.ktx.toHtml
-import moe.shizuku.manager.overlay.FloatingWindowManager
+import moe.shizuku.manager.overlay.FloatingPairActivity
 import moe.shizuku.manager.starter.StarterActivity
 import moe.shizuku.manager.utils.CustomTabsHelper
 import moe.shizuku.manager.utils.EnvironmentUtils
@@ -102,12 +102,7 @@ class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: Vie
 
     @RequiresApi(Build.VERSION_CODES.R)
     private fun onPairViaFloatingWindowClicked(context: Context) {
-        if (!FloatingWindowManager.isRunning()) {
-            // 先启动悬浮窗
-            val started = FloatingWindowManager.start(context)
-            if (!started) return
-        }
-        // 通过悬浮窗发起配对搜索
-        FloatingWindowManager.startPairing(context)
+        // 跳转到悬浮窗配对教程页面
+        context.startActivity(Intent(context, FloatingPairActivity::class.java))
     }
 }

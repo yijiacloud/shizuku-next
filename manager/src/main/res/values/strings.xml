@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Shizuku</string>
+    <string name="app_name" translatable="false">Shizuku Next</string>
 
     <!-- To translators: you can leave your here -->
     <string name="translation_contributors" />
@@ -94,8 +94,21 @@
     <string name="terminal_history">历史</string>
     <string name="terminal_copied">已复制到剪贴板</string>
     <string name="terminal_no_history">暂无命令历史</string>
-    <string name="home_terminal_title">终端使用</string>
+    <string name="home_terminal_title">终端</string>
     <string name="home_terminal_description">在应用内直接执行 Shell 命令</string>
+    <string name="home_module_title">模块</string>
+    <string name="home_module_description">管理和安装扩展模块</string>
+    <string name="module_list_title">模块管理</string>
+    <string name="module_install">安装模块</string>
+    <string name="module_empty_hint">还没有安装任何模块\n点击右下角按钮安装</string>
+    <string name="module_config">配置</string>
+    <string name="module_action">执行</string>
+    <string name="module_uninstall">卸载</string>
+    <string name="module_uninstall_title">卸载模块</string>
+    <string name="module_uninstall_confirm">确定要卸载「%1$s」吗？</string>
+    <string name="module_uninstalled">模块已卸载</string>
+    <string name="module_install_failed">安装失败</string>
+    <string name="module_no_action_script">该模块没有操作脚本</string>
     <string name="terminal_tutorial_1">First, Export files to any where you want. You will find two files, %1$s and %2$s.</string>
     <string name="terminal_tutorial_1_description">If there are files with the same name in the selected folder, they will be deleted.\n\nThe export function uses SAF (Storage Access Framework). It\'s reported that MIUI breaks the functions of SAF. If you are using MIUI, you may have to extract the file from Shizuku\'s apk or download from GitHub.</string>
     <string name="terminal_export_files">Export files</string>
@@ -177,7 +190,7 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <!-- Shizuku Next - Floating Window Mode -->
     <string name="floating_window_title" translatable="false">Shizuku Next</string>
     <string name="floating_window_collapse">折叠/展开</string>
-    <string name="floating_window_hint_idle">就绪，等待请求…</string>`n    <string name="floating_window_hint_searching">正在搜索设备…</string>`n    <string name="floating_window_hint_no_device">未找到配对设备</string>
+    <string name="floating_window_hint_idle">就绪，点击配对开始使用</string>`n    <string name="floating_window_hint_searching">正在搜索设备…</string>`n    <string name="floating_window_hint_no_device">未找到配对设备</string>
     <string name="floating_window_hint_waiting_pair">已找到设备，请输入配对码</string>
     <string name="floating_window_hint_waiting_auth">请输入授权密码</string>
     <string name="floating_window_hint_processing">处理中…</string>
@@ -195,4 +208,34 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <string name="floating_window_pair_via_overlay">通过悬浮窗配对</string>
     <string name="settings_floating_window">悬浮窗模式</string>
     <string name="settings_floating_window_summary">Keep a floating window on screen for pairing and authorization</string>
+    <!-- 悬浮窗配对教程 -->
+    <string name="floating_pair_intro">通过悬浮窗进行无线调试配对。悬浮窗会自动搜索设备，找到后在此输入配对码即可完成配对。适用于无法弹出配对对话框的设备。</string>
+    <string name="floating_pair_step1">在开发者选项中开启「无线调试」功能</string>
+    <string name="floating_pair_step1b">开启无线调试后，点击「使用配对码配对设备」，生成配对码和配对端口</string>
+    <string name="floating_pair_wireless_pairing_btn">打开无线配对</string>
+    <string name="floating_pair_step2_overlay">在开发者选项中开启「允许在其他应用上层显示」（悬浮窗权限）</string>
+    <string name="floating_pair_overlay_settings">悬浮窗权限设置</string>
+    <string name="floating_pair_step3_settings_overlay">在开发者选项中勾选「允许其他设备重叠在设置上」（使悬浮窗可悬浮于设置界面之上）</string>
+    <string name="floating_pair_settings_overlay_btn">打开开发者选项</string>
+    <string name="floating_pair_step3">点击下方「开始配对」按钮，悬浮窗将自动搜索附近的设备</string>
+    <string name="floating_pair_step4">搜索到设备后，在悬浮窗中输入配对码完成配对</string>
+    <string name="floating_pair_start">开始配对</string>
+    <string name="floating_pair_started">配对已启动，请继续步骤 5</string>
+    <string name="floating_pair_permission_title">需要悬浮窗权限</string>
+    <string name="floating_pair_permission_msg">配对功能需要悬浮窗权限，请在设置中授予后重试</string>
+
+    <!-- 配对成功后连接 ADB 阶段 -->
+    <string name="floating_window_hint_connecting">配对成功，正在搜索 ADB 端口…</string>
+    <string name="floating_window_hint_connecting_adb">正在连接 ADB 并启动服务…</string>
+    <string name="floating_window_hint_started">启动成功！</string>
+    <string name="floating_window_hint_connect_timeout">搜索 ADB 端口超时，请重试</string>
+    <string name="floating_window_hint_connect_failed">连接 ADB 失败，请重试</string>
+    <string name="floating_window_hint_manual_connect">未找到 ADB 端口，请在 APP 中手动输入</string>
+    <string name="manual_connect_title">手动连接 ADB</string>
+    <string name="manual_connect_description">配对已完成，但未能自动搜索到 ADB 端口。请在下方输入 ADB 的 IP 地址和端口号，然后点击连接。</string>
+    <string name="manual_connect_host_hint">IP 地址</string>
+    <string name="manual_connect_port_hint">端口号</string>
+    <string name="manual_connect_button">连接并启动</string>
+    <string name="manual_connect_host_empty">请输入 IP 地址</string>
+    <string name="manual_connect_port_invalid">请输入有效的端口号（1-65535）</string>
 </resources>

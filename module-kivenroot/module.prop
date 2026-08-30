@@ -1,0 +1,7 @@
+# KivenRoot 临时提权模块
+id=kivenroot
+name=KivenRoot 临时提权
+version=v1.0.0
+versionCode=1
+author=Shizuku Next
+description=通过 xpad2 实现临时 root 提权。安装时自动复制 xpad2 到 /data/local/tmp 并赋予 700 权限，然后执行 install 操作。可在配置页面查看运行日志和手动执行提权操作。

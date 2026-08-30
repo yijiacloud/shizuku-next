@@ -1,0 +1,59 @@
+<h2>示例模块配置</h2>
+<p>这是示例模块的配置页面。模块开发者可以使用 HTML + JavaScript 创建交互式配置界面。</p>
+
+<div class="card">
+    <h3>模块信息</h3>
+    <p>模块 ID: <strong id="mod-id">-</strong></p>
+    <p>模块名称: <strong id="mod-name">-</strong></p>
+</div>
+
+<div class="card">
+    <h3>系统信息</h3>
+    <p>点击下方按钮获取系统信息（需通过 Shizuku 执行）：</p>
+    <button onclick="getSystemInfo()">获取系统信息</button>
+    <button onclick="getBatteryInfo()">获取电池信息</button>
+    <button onclick="clearOutput()">清空</button>
+    <pre id="output" style="margin-top:12px;padding:12px;background:#e7e0eb;border-radius:12px;white-space:pre-wrap;font-size:13px;min-height:60px;">等待操作...</pre>
+</div>
+
+<div class="card">
+    <h3>自定义命令</h3>
+    <p>输入要执行的 shell 命令：</p>
+    <input type="text" id="custom-cmd" placeholder="例如：getprop ro.build.version.release" value="getprop ro.build.version.release">
+    <button onclick="execCustom()">执行命令</button>
+</div>
+
+<script>
+    // 显示模块信息
+    document.getElementById('mod-id').textContent = window.ShizukuNext.moduleId;
+    document.getElementById('mod-name').textContent = window.ShizukuNext.moduleName;
+
+    function getSystemInfo() {
+        const output = document.getElementById('output');
+        output.textContent = '正在获取系统信息...';
+        window.ShizukuNext.exec('getprop ro.build.version.release; getprop ro.product.model; getprop ro.build.version.sdk');
+        setTimeout(() => {
+            output.textContent = 'Android: ' + '请查看终端输出';
+        }, 500);
+    }
+
+    function getBatteryInfo() {
+        const output = document.getElementById('output');
+        output.textContent = '正在获取电池信息...';
+        window.ShizukuNext.exec('dumpsys battery');
+        setTimeout(() => {
+            output.textContent = '电池信息已发送到终端';
+        }, 500);
+    }
+
+    function execCustom() {
+        const cmd = document.getElementById('custom-cmd').value;
+        if (!cmd) return;
+        document.getElementById('output').textContent = '执行: ' + cmd;
+        window.ShizukuNext.exec(cmd);
+    }
+
+    function clearOutput() {
+        document.getElementById('output').textContent = '等待操作...';
+    }
+</script>

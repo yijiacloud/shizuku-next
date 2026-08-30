@@ -72,6 +72,109 @@ class ShellTerminalActivity : AppBarActivity() {
         appendOutput("以 Shizuku 特权身份执行 Shell 命令。\n", COLOR_INFO)
         appendOutput("输入命令并按回车执行，↑↓ 键翻历史。\n\n", COLOR_INFO)
         printPrompt()
+
+        // 处理来自模块的脚本执行请求
+        val scriptContent = intent.getStringExtra("script_content")
+        if (!scriptContent.isNullOrEmpty()) {
+            val moduleDir = intent.getStringExtra("module_dir") ?: ""
+            // 将脚本写入临时文件并执行
+            executor.execute {
+                try {
+                    val scriptFile = java.io.File(cacheDir, "module_action.sh")
+                    scriptFile.writeText(scriptContent)
+                    scriptFile.setExecutable(true)
+
+                    if (!Shizuku.pingBinder()) {
+                        handler.post {
+                            appendOutput("错误：Shizuku 服务未运行\n", COLOR_ERROR, bold = true)
+                            printPrompt()
+                        }
+                        return@execute
+                    }
+
+                    val binder = Shizuku.getBinder()
+                    if (binder == null || !binder.pingBinder()) {
+                        handler.post {
+                            appendOutput("错误：无法获取 Shizuku Binder\n", COLOR_ERROR)
+                            printPrompt()
+                        }
+                        return@execute
+                    }
+
+                    val service = moe.shizuku.server.IShizukuService.Stub.asInterface(binder)
+
+                    // 将脚本文件路径传给 sh 执行
+                    val cmd = if (moduleDir.isNotEmpty()) {
+                        "MODDIR=\"$moduleDir\" sh \"$scriptFile\" \"$moduleDir\""
+                    } else {
+                        "sh \"$scriptFile\""
+                    }
+
+                    handler.post {
+                        appendOutput("执行模块脚本...\n", COLOR_INFO)
+                    }
+
+                    val parts = arrayOf("sh", "-c", cmd)
+                    val process = service.newProcess(parts, null, null)
+
+                    val stdoutFd = process.getInputStream()
+                    val stderrFd = process.getErrorStream()
+
+                    val stdout = BufferedReader(InputStreamReader(ParcelFileDescriptor.AutoCloseInputStream(stdoutFd)))
+                    val stderr = BufferedReader(InputStreamReader(ParcelFileDescriptor.AutoCloseInputStream(stderrFd)))
+
+                    val stdoutThread = Thread {
+                        try {
+                            var line: String?
+                            while (stdout.readLine().also { line = it } != null) {
+                                val text = line + "\n"
+                                handler.post { appendOutput(text, COLOR_OUTPUT) }
+                            }
+                        } catch (e: Exception) {
+                            handler.post { appendOutput("读取输出失败: ${e.message}\n", COLOR_ERROR) }
+                        } finally {
+                            try { stdout.close() } catch (_: Exception) {}
+                        }
+                    }
+
+                    val stderrThread = Thread {
+                        try {
+                            var line: String?
+                            while (stderr.readLine().also { line = it } != null) {
+                                val text = line + "\n"
+                                handler.post { appendOutput(text, COLOR_ERROR) }
+                            }
+                        } catch (e: Exception) {}
+                        finally {
+                            try { stderr.close() } catch (_: Exception) {}
+                        }
+                    }
+
+                    stdoutThread.start()
+                    stderrThread.start()
+                    stdoutThread.join()
+                    stderrThread.join()
+
+                    val exitCode = process.waitFor()
+                    process.destroy()
+
+                    handler.post {
+                        if (exitCode != 0) {
+                            appendOutput("[退出码: $exitCode]\n", COLOR_EXITCODE)
+                        }
+                        appendOutput("模块脚本执行完毕。\n\n", COLOR_INFO)
+                        printPrompt()
+                    }
+
+                    scriptFile.delete()
+                } catch (e: Exception) {
+                    handler.post {
+                        appendOutput("执行模块脚本失败: ${e.message}\n", COLOR_ERROR, bold = true)
+                        printPrompt()
+                    }
+                }
+            }
+        }
     }
 
     private fun setupInput() {
@@ -152,7 +255,7 @@ class ShellTerminalActivity : AppBarActivity() {
             return
         }
 
-        // 通过 Shizuku 执行命令
+        // 通过 Shizuku 执行命令 — 流式输出
         executor.execute {
             try {
                 val binder = Shizuku.getBinder()
@@ -174,27 +277,46 @@ class ShellTerminalActivity : AppBarActivity() {
                 val stdout = BufferedReader(InputStreamReader(ParcelFileDescriptor.AutoCloseInputStream(stdoutFd)))
                 val stderr = BufferedReader(InputStreamReader(ParcelFileDescriptor.AutoCloseInputStream(stderrFd)))
 
-                val stdoutText = StringBuilder()
-                val stderrText = StringBuilder()
+                // 双线程分别读取 stdout 和 stderr，实时推送到 UI
+                val stdoutThread = Thread {
+                    try {
+                        var line: String?
+                        while (stdout.readLine().also { line = it } != null) {
+                            val text = line + "\n"
+                            handler.post { appendOutput(text, COLOR_OUTPUT) }
+                        }
+                    } catch (e: Exception) {
+                        handler.post { appendOutput("读取输出失败: ${e.message}\n", COLOR_ERROR) }
+                    } finally {
+                        try { stdout.close() } catch (_: Exception) {}
+                    }
+                }
 
-                var line: String?
-                while (stdout.readLine().also { line = it } != null) {
-                    stdoutText.append(line).append("\n")
+                val stderrThread = Thread {
+                    try {
+                        var line: String?
+                        while (stderr.readLine().also { line = it } != null) {
+                            val text = line + "\n"
+                            handler.post { appendOutput(text, COLOR_ERROR) }
+                        }
+                    } catch (e: Exception) {
+                        // 静默处理
+                    } finally {
+                        try { stderr.close() } catch (_: Exception) {}
+                    }
                 }
-                while (stderr.readLine().also { line = it } != null) {
-                    stderrText.append(line).append("\n")
-                }
+
+                stdoutThread.start()
+                stderrThread.start()
+
+                // 等待两个输出线程结束
+                stdoutThread.join()
+                stderrThread.join()
 
                 val exitCode = process.waitFor()
                 process.destroy()
 
                 handler.post {
-                    if (stdoutText.isNotEmpty()) {
-                        appendOutput(stdoutText.toString(), COLOR_OUTPUT)
-                    }
-                    if (stderrText.isNotEmpty()) {
-                        appendOutput(stderrText.toString(), COLOR_ERROR)
-                    }
                     if (exitCode != 0) {
                         appendOutput("[退出码: $exitCode]\n", COLOR_EXITCODE)
                     }

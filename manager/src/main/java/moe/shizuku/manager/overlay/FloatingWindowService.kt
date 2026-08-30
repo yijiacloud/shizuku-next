@@ -21,24 +21,22 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
 import android.widget.TextView
 import moe.shizuku.manager.R
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.utils.Logger.LOGGER
 
 /**
- * 悬浮窗服务 - 极简常驻输入窗
+ * 悬浮窗服务 - 自带数字键盘，无需系统输入法
  *
- * 配对流程（与原版 AdbPairDialogFragment 一致）：
- * 1. 先 mDNS 搜索设备，悬浮窗显示"正在搜索设备…"，输入框隐藏
- * 2. 发现设备后，悬浮窗显示"已找到设备，请输入配对码"，输入框出现
- * 3. 用户输入配对码并提交 → 执行 AdbPairingClient
+ * 配对流程：
+ * 1. 先 mDNS 搜索设备，悬浮窗显示"正在搜索设备…"，键盘隐藏
+ * 2. 发现设备后，悬浮窗显示"已找到设备，请输入配对码"，数字键盘出现
+ * 3. 用户用自带键盘输入配对码，点击 ✓ 确认 → 执行 AdbPairingClient
  * 4. 显示成功/失败结果
  *
- * 输入法适配：
- * 悬浮窗默认使用 FLAG_NOT_FOCUSABLE，点击输入框时动态移除该 flag 以唤起输入法。
+ * 自带数字键盘（0-9 + 删除 + 确认），完全不依赖系统输入法，
+ * 彻底解决悬浮窗无法调出输入法的问题。
  */
 class FloatingWindowService : Service() {
 
@@ -54,9 +52,11 @@ class FloatingWindowService : Service() {
         const val STATE_WAITING_AUTH = 2
         const val STATE_SUCCESS = 3
         const val STATE_FAILED = 4
+        const val STATE_CONNECTING = 6  // 配对成功后正在连接 ADB
 
         private const val NOTIFICATION_CHANNEL = "floating_window"
         private const val NOTIFICATION_ID = 2
+        private const val MAX_CODE_LENGTH = 16
 
         fun start(context: Context) {
             val intent = Intent(context, FloatingWindowService::class.java)
@@ -81,14 +81,17 @@ class FloatingWindowService : Service() {
     private lateinit var overlayView: View
     private lateinit var layoutParams: LayoutParams
     private lateinit var hintText: TextView
-    private lateinit var inputField: EditText
+    private lateinit var codeDisplay: TextView
+    private lateinit var keypadContainer: View
     private lateinit var collapseIcon: View
     private lateinit var expandedContainer: View
     private val handler = Handler(Looper.getMainLooper())
 
     private var isCollapsed = false
     private var currentState = STATE_IDLE
-    private var isFocused = false
+
+    // 用户输入的配对码
+    private val codeBuilder = StringBuilder()
 
     private var pairingController: OverlayPairingController? = null
     private var inputReceiver: OverlayInputReceiver? = null
@@ -111,8 +114,6 @@ class FloatingWindowService : Service() {
         }
 
         createNotificationChannel()
-
-        // 必须先 startForeground，否则 startForegroundService 后 5 秒内不调用会崩溃
         startForeground()
 
         inputReceiver = OverlayInputReceiver()
@@ -123,7 +124,7 @@ class FloatingWindowService : Service() {
 
         createOverlayWindow()
         markRunning(true)
-        LOGGER.i("FloatingWindowService", "Overlay window created")
+        LOGGER.i("FloatingWindowService", "Overlay window created with built-in keypad")
     }
 
     private fun hasOverlayPermission(): Boolean {
@@ -164,7 +165,6 @@ class FloatingWindowService : Service() {
             }
         } catch (e: Exception) {
             LOGGER.w(e, "FloatingWindowService: startForeground failed")
-            // 降级：尝试不带 type
             try {
                 startForeground(NOTIFICATION_ID, notification)
             } catch (e2: Exception) {
@@ -181,6 +181,7 @@ class FloatingWindowService : Service() {
             LayoutParams.TYPE_PHONE
         }
 
+        // 始终保持 FLAG_NOT_FOCUSABLE — 不需要焦点，自带键盘不依赖输入法
         layoutParams = LayoutParams(
             LayoutParams.WRAP_CONTENT,
             LayoutParams.WRAP_CONTENT,
@@ -197,12 +198,13 @@ class FloatingWindowService : Service() {
 
         overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_floating_window, null)
         hintText = overlayView.findViewById(R.id.overlay_hint)
-        inputField = overlayView.findViewById(R.id.overlay_input)
+        codeDisplay = overlayView.findViewById(R.id.overlay_code_display)
+        keypadContainer = overlayView.findViewById(R.id.overlay_keypad)
         collapseIcon = overlayView.findViewById(R.id.overlay_collapse)
         expandedContainer = overlayView.findViewById(R.id.overlay_expanded)
 
         setupDrag()
-        setupInput()
+        setupKeypad()
         setupCollapse()
 
         updateState(STATE_IDLE)
@@ -243,61 +245,54 @@ class FloatingWindowService : Service() {
         }
     }
 
-    private fun setupInput() {
-        inputField.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                requestFocusForInput()
-            }
-            false
-        }
+    /**
+     * 设置自带数字键盘
+     * 0-9 追加数字，⌫ 删除，✓ 确认提交
+     */
+    private fun setupKeypad() {
+        val numberKeys = intArrayOf(
+            R.id.key_0, R.id.key_1, R.id.key_2, R.id.key_3, R.id.key_4,
+            R.id.key_5, R.id.key_6, R.id.key_7, R.id.key_8, R.id.key_9
+        )
 
-        inputField.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
-                val text = inputField.text.toString().trim()
-                if (text.isNotEmpty()) {
-                    submitInput(text)
-                }
-                true
-            } else {
-                false
+        for (id in numberKeys) {
+            overlayView.findViewById<TextView>(id).setOnClickListener {
+                appendDigit((it as TextView).text.toString())
             }
         }
 
-        inputField.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus && isFocused) {
-                clearFocusFromInput()
-            }
+        overlayView.findViewById<TextView>(R.id.key_delete).setOnClickListener {
+            deleteDigit()
+        }
+
+        overlayView.findViewById<TextView>(R.id.key_confirm).setOnClickListener {
+            confirmCode()
         }
     }
 
-    private fun requestFocusForInput() {
-        if (isFocused) return
-        isFocused = true
-        try {
-            layoutParams.flags = layoutParams.flags and
-                    LayoutParams.FLAG_NOT_FOCUSABLE.inv()
-            layoutParams.flags = layoutParams.flags or
-                    LayoutParams.FLAG_ALT_FOCUSABLE_IM
-            windowManager.updateViewLayout(overlayView, layoutParams)
-            inputField.requestFocus()
-            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as
-                    android.view.inputmethod.InputMethodManager
-            imm.showSoftInput(inputField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
-        } catch (e: Exception) {
-            LOGGER.w(e, "FloatingWindowService: requestFocusForInput failed")
-        }
+    private fun appendDigit(digit: String) {
+        if (codeBuilder.length >= MAX_CODE_LENGTH) return
+        codeBuilder.append(digit)
+        updateCodeDisplay()
     }
 
-    private fun clearFocusFromInput() {
-        if (!isFocused) return
-        isFocused = false
-        try {
-            layoutParams.flags = layoutParams.flags or LayoutParams.FLAG_NOT_FOCUSABLE
-            layoutParams.flags = layoutParams.flags and LayoutParams.FLAG_ALT_FOCUSABLE_IM.inv()
-            windowManager.updateViewLayout(overlayView, layoutParams)
-        } catch (e: Exception) {
-            LOGGER.w(e, "FloatingWindowService: clearFocusFromInput failed")
-        }
+    private fun deleteDigit() {
+        if (codeBuilder.isEmpty()) return
+        codeBuilder.deleteCharAt(codeBuilder.length - 1)
+        updateCodeDisplay()
+    }
+
+    private fun updateCodeDisplay() {
+        codeDisplay.text = codeBuilder.toString()
+    }
+
+    private fun confirmCode() {
+        val code = codeBuilder.toString().trim()
+        if (code.isEmpty()) return
+        LOGGER.i("FloatingWindowService", "User confirmed pairing code (length=${code.length})")
+        codeBuilder.clear()
+        updateCodeDisplay()
+        submitInput(code)
     }
 
     private fun setupCollapse() {
@@ -325,6 +320,7 @@ class FloatingWindowService : Service() {
             val hint = customHint ?: when (state) {
                 STATE_IDLE -> getString(R.string.floating_window_hint_idle)
                 STATE_SEARCHING -> getString(R.string.floating_window_hint_searching)
+                STATE_CONNECTING -> getString(R.string.floating_window_hint_connecting)
                 STATE_WAITING_PAIR -> getString(R.string.floating_window_hint_waiting_pair)
                 STATE_WAITING_AUTH -> getString(R.string.floating_window_hint_waiting_auth)
                 STATE_SUCCESS -> getString(R.string.floating_window_hint_success)
@@ -338,23 +334,25 @@ class FloatingWindowService : Service() {
                 STATE_FAILED -> 0xFFFF5252.toInt()
                 STATE_WAITING_PAIR, STATE_WAITING_AUTH -> 0xFFFFC107.toInt()
                 STATE_SEARCHING -> 0xFF42A5F5.toInt()
+                STATE_CONNECTING -> 0xFF42A5F5.toInt()
                 else -> resolveThemeColor()
             }
             hintText.setTextColor(accentColor)
 
             when (state) {
-                STATE_SEARCHING, STATE_IDLE -> {
-                    inputField.visibility = View.GONE
-                    inputField.setText("")
-                    if (isFocused) clearFocusFromInput()
+                STATE_SEARCHING, STATE_IDLE, STATE_CONNECTING -> {
+                    keypadContainer.visibility = View.GONE
+                    codeBuilder.clear()
+                    updateCodeDisplay()
                 }
                 STATE_WAITING_PAIR, STATE_WAITING_AUTH -> {
-                    inputField.visibility = View.VISIBLE
-                    inputField.setText("")
+                    keypadContainer.visibility = View.VISIBLE
+                    codeBuilder.clear()
+                    updateCodeDisplay()
                 }
                 STATE_SUCCESS, STATE_FAILED -> {
-                    inputField.setText("")
-                    if (isFocused) clearFocusFromInput()
+                    codeBuilder.clear()
+                    updateCodeDisplay()
                 }
             }
 
@@ -375,9 +373,6 @@ class FloatingWindowService : Service() {
     }
 
     private fun submitInput(text: String) {
-        LOGGER.i("FloatingWindowService", "User submitted input (length=${text.length})")
-        clearFocusFromInput()
-
         val intent = Intent(OverlayInputReceiver.ACTION_INPUT_SUBMITTED).apply {
             setPackage(packageName)
             putExtra(OverlayInputReceiver.EXTRA_INPUT, text)

@@ -11,6 +11,6 @@ call gradlew.bat :manager:assembleDebug --no-daemon %*
 if %ERRORLEVEL%==0 (
     echo.
     echo === Build successful! ===
-    copy /Y "manager\build\outputs\apk\debug\*.apk" "out\apk\shizuku-next-debug.apk"
+    powershell -Command "Copy-Item -LiteralPath (Get-Item 'manager\build\outputs\apk\debug\*.apk').FullName -Destination 'out\apk\shizuku-next-debug.apk' -Force"
     echo APK: out\apk\shizuku-next-debug.apk
 )

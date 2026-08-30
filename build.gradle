@@ -35,8 +35,8 @@ def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text
 def gitCommitIdSafe = gitCommitId.isEmpty() ? 'unknown' : gitCommitId
 def gitCommitCountStr = 'git rev-list --count HEAD'.execute([], project.rootDir).text.trim()
 def gitCommitCount = gitCommitCountStr.isEmpty() ? 1 : Integer.parseInt(gitCommitCountStr)
-def baseVersionName = "${api_version_major}.6.0"
+def baseVersionName = "0.05"
 ext {
     versionCode = gitCommitCount
-    versionName = "${baseVersionName}.r${gitCommitCount}.${gitCommitIdSafe}"
+    versionName = "${baseVersionName}"
 }

@@ -94,6 +94,22 @@
             android:label="@string/home_terminal_title" />
 
         <activity
+            android:name=".overlay.FloatingPairActivity"
+            android:label="@string/home_wireless_adb_pair_via_floating_window"
+            android:exported="false" />
+
+        <activity
+            android:name=".overlay.ManualConnectActivity"
+            android:label="@string/manual_connect_title"
+            android:exported="false" />
+
+        <activity
+            android:name=".module.ModuleListActivity"
+            android:label="@string/module_list_title" />
+        <activity
+            android:name=".module.ModuleConfigActivity"
+            android:label="Module Config" />
+        <activity
             android:name=".shell.ShellTerminalActivity"
             android:label="@string/terminal_title"
             android:exported="false" />

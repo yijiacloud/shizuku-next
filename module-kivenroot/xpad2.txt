@@ -1,0 +1,17 @@
+xpad2 二进制文件说明
+=====================
+
+请将真实的 xpad2 二进制文件替换此文件。
+
+操作方法：
+1. 将你的 xpad2 二进制文件复制到 module-kivenroot/ 目录下
+2. 确保文件名为 xpad2（无扩展名）
+3. 重新打包 zip 文件
+4. 在 Shizuku Next 模块管理中安装
+
+安装脚本会自动：
+1. 复制 xpad2 到 /data/local/tmp/
+2. 赋予 700 权限 (chmod 700)
+3. 执行 /data/local/tmp/xpad2 install
+
+如果没有替换此文件，安装时会报错 "未找到 xpad2 二进制文件"。

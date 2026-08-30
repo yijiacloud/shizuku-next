@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 悬浮窗布局：极简设计，提示文字 + 配对码输入框（搜索阶段隐藏输入框） -->
+<!-- 悬浮窗布局：自带数字键盘，无需系统输入法 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/overlay_background"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="12dp"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:paddingTop="10dp"
     android:paddingBottom="12dp"
     android:elevation="8dp">
 
@@ -21,8 +21,8 @@
 
         <ImageView
             android:id="@+id/overlay_collapse"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:src="@drawable/ic_floating_window_24"
             android:contentDescription="@string/floating_window_collapse"
             android:alpha="1" />
@@ -33,15 +33,15 @@
             android:layout_marginStart="6dp"
             android:text="@string/floating_window_title"
             android:textColor="?android:textColorSecondary"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
     </LinearLayout>
 
-    <!-- 展开区域：提示文字 + 配对码输入框 -->
+    <!-- 展开区域 -->
     <LinearLayout
         android:id="@+id/overlay_expanded"
-        android:layout_width="240dp"
+        android:layout_width="220dp"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
@@ -52,28 +52,234 @@
             android:layout_height="wrap_content"
             android:text="@string/floating_window_hint_idle"
             android:textColor="?android:textColorPrimary"
-            android:textSize="13sp"
-            android:layout_marginBottom="8dp"
-            android:maxLines="4"
+            android:textSize="12sp"
+            android:layout_marginBottom="6dp"
+            android:maxLines="3"
             android:ellipsize="end" />
 
-        <!-- 配对码输入框（搜索阶段隐藏，找到设备后显示） -->
-        <EditText
-            android:id="@+id/overlay_input"
+        <!-- 配对码显示区 + 数字键盘（搜索阶段隐藏） -->
+        <LinearLayout
+            android:id="@+id/overlay_keypad"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:hint="@string/floating_window_input_hint"
-            android:textColorHint="?android:textColorHint"
-            android:textColor="?android:textColorPrimary"
-            android:textSize="14sp"
-            android:background="@drawable/overlay_input_background"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:singleLine="true"
-            android:imeOptions="actionGo"
-            android:inputType="number"
-            android:textCursorDrawable="@null"
-            android:visibility="gone" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- 配对码显示区 -->
+            <TextView
+                android:id="@+id/overlay_code_display"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:background="@drawable/overlay_input_background"
+                android:gravity="center"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.15"
+                android:text=""
+                android:layout_marginBottom="8dp" />
+
+            <!-- 第 1 行: 1 2 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:id="@+id/key_1"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_2"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="2"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_3"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="3"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+            <!-- 第 2 行: 4 5 6 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:id="@+id/key_4"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="4"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_5"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="5"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_6"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="6"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+            <!-- 第 3 行: 7 8 9 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:id="@+id/key_7"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="7"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_8"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="8"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_9"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="9"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+            <!-- 第 4 行: 删除 0 确认 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/key_delete"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_delete_background"
+                    android:gravity="center"
+                    android:text="⌫"
+                    android:textColor="#FF8A80"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_0"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/overlay_key_background"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="18sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/key_confirm"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/overlay_key_confirm_background"
+                    android:gravity="center"
+                    android:text="✓"
+                    android:textColor="#B9F6CA"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 

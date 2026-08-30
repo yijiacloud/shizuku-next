@@ -1,0 +1,53 @@
+<h2>KivenRoot 临时提权</h2>
+
+<div class="card">
+    <p>此模块通过 <strong>xpad2</strong> 实现临时 root 提权。</p>
+    <p>点击下方按钮执行提权操作，运行日志将实时显示在下方。</p>
+    <p>
+        状态: <span id="sn-status" class="status-badge status-idle">待机</span>
+    </p>
+</div>
+
+<div class="card">
+    <h3>提权操作</h3>
+    <p>执行 <code>/data/local/tmp/xpad2 install</code></p>
+    <button onclick="runInstall()">执行提权</button>
+    <button class="secondary" onclick="runStepByStep()">分步执行</button>
+    <button class="secondary" onclick="clearLog()">清空日志</button>
+</div>
+
+<div class="card">
+    <h3>运行日志</h3>
+    <div id="sn-log-box" class="log-box">等待执行...</div>
+</div>
+
+<script>
+    var MODDIR = ShizukuNext.getModuleDir();
+    var XPAD2 = '/data/local/tmp/xpad2';
+
+    // 直接执行提权
+    function runInstall() {
+        ShizukuNext.clearLog();
+        ShizukuNext.exec(XPAD2 + ' install');
+    }
+
+    // 分步执行：复制 → chmod → install
+    function runStepByStep() {
+        ShizukuNext.clearLog();
+        var moddir = ShizukuNext.getModuleDir();
+
+        // 使用链式命令一次性执行，日志会实时输出
+        var cmd = 'echo "[1/3] 复制 xpad2 ..." && cp "' + moddir + '/xpad2" /data/local/tmp/xpad2 && echo "  → 复制完成" && ' +
+                  'echo "[2/3] 设置 700 权限 ..." && chmod 700 /data/local/tmp/xpad2 && echo "  → 权限设置完成" && ls -la /data/local/tmp/xpad2 && ' +
+                  'echo "[3/3] 执行 xpad2 install ..." && echo "----------------------------------------" && ' +
+                  '/data/local/tmp/xpad2 install && echo "----------------------------------------" && echo "[完成] 提权操作执行完毕"';
+        ShizukuNext.exec(cmd);
+    }
+
+    function clearLog() {
+        ShizukuNext.clearLog();
+        var status = document.getElementById('sn-status');
+        status.className = 'status-badge status-idle';
+        status.textContent = '待机';
+    }
+</script>

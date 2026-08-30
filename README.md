@@ -1,85 +1,87 @@
-# Shizuku
+# Shizuku Next
 
-## Background
+> 基于 [Shizuku](https://github.com/RikkaApps/Shizuku) 的增强分支，新增悬浮窗配对、终端、模块系统等功能。
 
-When developing apps that requires root, the most common method is to run some commands in the su shell. For example, there is an app that uses the `pm enable/disable` command to enable/disable components.
+## 功能特性
 
-This method has very big disadvantages:
+### 原有功能（保持兼容）
+- 通过 ADB / Root 启动 Shizuku 服务
+- 无线调试配对（原版对话框方式）
+- 应用授权管理
+- AIDL 接口完全兼容原版 Shizuku
 
-1. **Extremely slow** (Multiple process creation)
-2. Needs to process texts (**Super unreliable**)
-3. The possibility is limited to available commands
-4. Even if ADB has sufficient permissions, the app requires root privileges to run
+### 新增功能
 
-Shizuku uses a completely different way. See detailed description below.
+#### 1. 悬浮窗配对模式
+- 通过悬浮窗进行无线调试配对，适用于无法弹出配对对话框的设备
+- 自带数字键盘，无需系统输入法
+- 自动搜索设备，找到后直接输入配对码
+- 配对成功后自动搜索 ADB 端口并连接
+- 支持手动输入 IP+端口作为后备方案
 
-## User guide & Download
+#### 2. 终端
+- 应用内直接执行 Shell 命令
+- 流式实时输出（stdout / stderr 双线程）
+- 命令历史记录（上下键翻阅）
+- 彩色终端输出
 
-<https://shizuku.rikka.app/>
+#### 3. 模块系统（参考 KernelSU）
+- 从 zip 文件安装模块
+- 模块启用 / 禁用 / 卸载
+- 支持 HTML 配置界面（WebView + JS 桥接）
+- 支持安装脚本、卸载脚本、操作脚本
+- 实时日志输出
 
-## How does Shizuku work?
+## 模块开发
 
-First, we need to talk about how app use system APIs. For example, if the app wants to get installed apps, we all know we should use `PackageManager#getInstalledPackages()`. This is actually an interprocess communication (IPC) process of the app process and system server process, just the Android framework did the inner works for us.
+模块开发文档请参考 [docs/module-development.md](docs/module-development.md)。
 
-Android uses `binder` to do this type of IPC. `Binder` allows the server-side to learn the uid and pid of the client-side, so that the system server can check if the app has the permission to do the operation.
+### 模块结构
 
-Usually, if there is a "manager" (e.g., `PackageManager`) for apps to use, there should be a "service" (e.g., `PackageManagerService`) in the system server process. We can simply think if the app holds the `binder` of the "service", it can communicate with the "service". The app process will receive binders of system services on start.
+```
+module.zip
+├── module.prop          # 模块元数据（必需）
+├── install.sh           # 安装脚本（可选）
+├── uninstall.sh         # 卸载脚本（可选）
+├── action.sh            # 操作脚本（可选）
+├── config.html          # HTML 配置界面（可选）
+└── ...                  # 其他文件
+```
 
-Shizuku guides users to run a process, Shizuku server, with root or ADB first. When the app starts, the `binder` to Shizuku server will also be sent to the app.
+### 示例模块
 
-The most important feature Shizuku provides is something like be a middle man to receive requests from the app, sent them to the system server, and send back the results. You can see the `transactRemote` method in `rikka.shizuku.server.ShizukuService` class, and `moe.shizuku.api.ShizukuBinderWrapper` class for the detail.
+项目包含一个示例模块 `sample_module.zip`，演示模块系统的基本功能。
 
-So, we reached our goal, to use system APIs with higher permission. And to the app, it is almost identical to the use of system APIs directly.
+## 构建
 
-## Developer guide
+### 环境要求
+- JDK 17+
+- Android SDK（API 36）
+- Android NDK 29
+- CMake 3.31.0
 
-### API & sample
+### 编译
 
-https://github.com/RikkaApps/Shizuku-API
+```bash
+./gradlew :manager:assembleDebug --no-daemon
+```
 
-### Migrating from pre-v11
+编译后的 APK 位于：`manager/build/outputs/apk/debug/`
 
-> Existing applications still works, of course.
+## 包名兼容
 
-https://github.com/RikkaApps/Shizuku-API#migration-guide-for-existing-applications-use-shizuku-pre-v11
+包名保持 `moe.shizuku.privileged.api`，与原版 Shizuku 完全兼容，其他依赖 Shizuku 的应用无需修改。
 
-### Attention
+## 致谢
 
-1. ADB permissions are limited
-
-   ADB has limited permissions and different on various system versions. You can see permissions granted to ADB [here](https://github.com/aosp-mirror/platform_frameworks_base/blob/master/packages/Shell/AndroidManifest.xml).
-
-   Before calling the API, you can use `ShizukuService#getUid` to check if Shizuku is running user ADB, or use `ShizukuService#checkPermission` to check if the server has sufficient permissions.
-
-2. Hidden API limitation from Android 9
-
-   As of Android 9, the usage of the hidden APIs is limited for normal apps. Please use other methods (such as <https://github.com/LSPosed/AndroidHiddenApiBypass>).
-
-3. Android 8.0 & ADB
-
-   At present, the way Shizuku service gets the app process is to combine `IActivityManager#registerProcessObserver` and `IActivityManager#registerUidObserver` (26+) to ensure that the app process will be sent when the app starts. However, on API 26, ADB lacks permissions to use `registerUidObserver`, so if you need to use Shizuku in a process that might not be started by an Activity, it is recommended to trigger the send binder by starting a transparent activity.
-
-4. Direct use of `transactRemote` requires attention
-
-   * The API may be different under different Android versions, please be sure to check it carefully. Also, the `android.app.IActivityManager` has the aidl form in API 26 and later, and `android.app.IActivityManager$Stub` exists only on API 26.
-
-   * `SystemServiceHelper.getTransactionCode` may not get the correct transaction code, such as `android.content.pm.IPackageManager$Stub.TRANSACTION_getInstalledPackages` does not exist on API 25 and there is `android.content.pm.IPackageManager$Stub.TRANSACTION_getInstalledPackages_47` (this situation has been dealt with, but it is not excluded that there may be other circumstances). This problem is not encountered with the `ShizukuBinderWrapper` method.
-
-## Developing Shizuku itself
-
-### Build
-
-- Clone with `git clone --recurse-submodules`
-- Run gradle task `:manager:assembleDebug` or `:manager:assembleRelease`
-
-The `:manager:assembleDebug` task generates a debuggable server. You can attach a debugger to `shizuku_server` to debug the server. Be aware that, in Android Studio, "Run/Debug configurations" - "Always install with package manager" should be checked, so that the server will use the latest code.
+- [Shizuku](https://github.com/RikkaApps/Shizuku) - RikkaApps
+- [KernelSU](https://github.com/tiann/KernelSU) - 模块系统设计参考
 
 ## License
 
-All code files in this project are licensed under Apache 2.0
+遵循原项目 Shizuku 的许可证。
 
-Under Apache 2.0 section 6, specifically:
+## 下载
 
-* You are **FORBIDDEN** to use `manager/src/main/res/mipmap*/ic_launcher*.png` image files, unless for displaying Shizuku itself.
+前往 [Releases](../../releases) 页面下载最新版本。
 
-* You are **FORBIDDEN** to use `Shizuku` as app name or use `moe.shizuku.privileged.api` as application id or declare `moe.shizuku.manager.permission.*` permission.

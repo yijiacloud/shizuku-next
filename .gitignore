@@ -11,3 +11,10 @@
 /manager/signing.properties
 /out
 /signing.properties
+
+# Shizuku Next 额外忽略
+*.apk
+!manager/build/outputs/apk/**/*.apk
+module-kivenroot.zip
+sample_module.zip
+moudle-kivenroot/
