@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 悬浮窗布局：极简设计，只有一个输入框 + 提示文字 + 折叠按钮 -->
+<!-- 悬浮窗布局：极简设计，提示文字 + 配对码输入框（搜索阶段隐藏输入框） -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -38,7 +38,7 @@
 
     </LinearLayout>
 
-    <!-- 展开区域：提示文字 + 输入框 -->
+    <!-- 展开区域：提示文字 + 配对码输入框 -->
     <LinearLayout
         android:id="@+id/overlay_expanded"
         android:layout_width="240dp"
@@ -54,10 +54,10 @@
             android:textColor="?android:textColorPrimary"
             android:textSize="13sp"
             android:layout_marginBottom="8dp"
-            android:maxLines="3"
+            android:maxLines="4"
             android:ellipsize="end" />
 
-        <!-- 输入框 -->
+        <!-- 配对码输入框（搜索阶段隐藏，找到设备后显示） -->
         <EditText
             android:id="@+id/overlay_input"
             android:layout_width="match_parent"
@@ -71,8 +71,9 @@
             android:paddingEnd="12dp"
             android:singleLine="true"
             android:imeOptions="actionGo"
-            android:inputType="text"
-            android:textCursorDrawable="@null" />
+            android:inputType="number"
+            android:textCursorDrawable="@null"
+            android:visibility="gone" />
 
     </LinearLayout>
 

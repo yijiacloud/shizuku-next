@@ -13,7 +13,6 @@ import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.adb.AdbInvalidPairingCodeException
 import moe.shizuku.manager.adb.AdbKey
 import moe.shizuku.manager.adb.AdbKeyException
-import moe.shizuku.manager.adb.AdbKeyStore
 import moe.shizuku.manager.adb.AdbMdns
 import moe.shizuku.manager.adb.AdbPairingClient
 import moe.shizuku.manager.adb.PreferenceAdbKeyStore
@@ -22,14 +21,11 @@ import java.net.ConnectException
 /**
  * 悬浮窗 ADB 配对控制器
  *
- * 工作流程：
- * 1. 开始 mDNS 搜索 ADB 配对服务
- * 2. 发现端口后，更新悬浮窗提示为"等待配对码"
- * 3. 用户在悬浮窗输入配对码后，执行 AdbPairingClient
- * 4. 更新悬浮窗显示成功/失败
- *
- * 这是对原 AdbPairingService（通知栏输入配对码）和 AdbPairDialogFragment（弹窗输入）的第三种方式，
- * 适配无法弹出 Dialog 的机型。
+ * 配对流程（与原版 AdbPairDialogFragment 一致）：
+ * 1. 开始 mDNS 搜索 ADB 配对服务 → 悬浮窗显示"正在搜索设备…"，输入框隐藏
+ * 2. 发现端口后 → 悬浮窗显示"已找到设备，请输入配对码"，输入框出现
+ * 3. 用户输入配对码 → 执行 AdbPairingClient
+ * 4. 显示成功/失败
  */
 class OverlayPairingController(private val context: Context) {
 
@@ -42,22 +38,21 @@ class OverlayPairingController(private val context: Context) {
     private var currentPort: Int = -1
     private var searching = false
 
-    /**
-     * mDNS 发现回调 — 发现配对服务端口时更新悬浮窗
-     */
     private val portObserver = Observer<Int> { port ->
         Log.i(TAG, "Pairing service port: $port")
         if (port <= 0) {
             currentPort = -1
+            // 设备丢失，回到搜索状态
             FloatingWindowManager.updateHint(
                 context,
-                FloatingWindowService.STATE_IDLE,
-                context.getString(moe.shizuku.manager.R.string.floating_window_hint_idle)
+                FloatingWindowService.STATE_SEARCHING,
+                context.getString(moe.shizuku.manager.R.string.floating_window_hint_searching)
             )
             return@Observer
         }
 
         currentPort = port
+        // 找到设备，切换到等待配对码状态
         FloatingWindowManager.updateHint(
             context,
             FloatingWindowService.STATE_WAITING_PAIR,
@@ -75,23 +70,23 @@ class OverlayPairingController(private val context: Context) {
             FloatingWindowManager.updateHint(
                 context,
                 FloatingWindowService.STATE_FAILED,
-                "Wireless ADB pairing requires Android 11+"
+                "无线调试配对需要 Android 11+"
             )
             return
         }
         searching = true
-        adbMdns = AdbMdns(context, AdbMdns.TLS_PAIRING, portObserver).apply { start() }
+        currentPort = -1
 
+        // 先显示搜索状态
         FloatingWindowManager.updateHint(
             context,
-            FloatingWindowService.STATE_IDLE,
-            context.getString(moe.shizuku.manager.R.string.floating_window_hint_idle)
+            FloatingWindowService.STATE_SEARCHING,
+            context.getString(moe.shizuku.manager.R.string.floating_window_hint_searching)
         )
+
+        adbMdns = AdbMdns(context, AdbMdns.TLS_PAIRING, portObserver).apply { start() }
     }
 
-    /**
-     * 停止搜索
-     */
     fun stopSearch() {
         if (!searching) return
         searching = false
@@ -101,7 +96,6 @@ class OverlayPairingController(private val context: Context) {
 
     /**
      * 用户在悬浮窗输入了配对码，执行配对
-     * @param pairCode 用户输入的配对码
      */
     fun onPairingCodeInput(pairCode: String) {
         if (currentPort <= 0) {
@@ -109,7 +103,7 @@ class OverlayPairingController(private val context: Context) {
             FloatingWindowManager.updateHint(
                 context,
                 FloatingWindowService.STATE_FAILED,
-                "No pairing service found"
+                context.getString(moe.shizuku.manager.R.string.floating_window_hint_no_device)
             )
             return
         }
@@ -143,7 +137,6 @@ class OverlayPairingController(private val context: Context) {
                         FloatingWindowService.STATE_SUCCESS,
                         context.getString(moe.shizuku.manager.R.string.floating_window_hint_success)
                     )
-                    // 配对成功后停止搜索
                     stopSearch()
                 } else {
                     Log.w(TAG, "Pairing returned false")

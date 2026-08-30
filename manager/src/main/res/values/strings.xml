@@ -87,6 +87,13 @@
     <string name="app_management_item_summary_requires_root">* requires Shizuku runs with root</string>
 
     <!-- Terminal -->
+    <string name="terminal_title">终端</string>
+    <string name="terminal_input_hint">输入命令…</string>
+    <string name="terminal_clear">清屏</string>
+    <string name="terminal_copy">复制</string>
+    <string name="terminal_history">历史</string>
+    <string name="terminal_copied">已复制到剪贴板</string>
+    <string name="terminal_no_history">暂无命令历史</string>
     <string name="home_terminal_title">Use Shizuku in terminal apps</string>
     <string name="home_terminal_description">Run commands through Shizuku in terminal apps you like</string>
     <string name="terminal_tutorial_1">First, Export files to any where you want. You will find two files, %1$s and %2$s.</string>
@@ -169,23 +176,23 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
 
     <!-- Shizuku Next - Floating Window Mode -->
     <string name="floating_window_title" translatable="false">Shizuku Next</string>
-    <string name="floating_window_collapse">Collapse/Expand</string>
-    <string name="floating_window_hint_idle">Ready. Waiting for request…</string>
-    <string name="floating_window_hint_waiting_pair">Waiting for ADB pairing code…</string>
-    <string name="floating_window_hint_waiting_auth">Waiting for authorization password…</string>
-    <string name="floating_window_hint_processing">Processing…</string>
-    <string name="floating_window_hint_success">Success!</string>
-    <string name="floating_window_hint_failed">Failed. Please try again.</string>
-    <string name="floating_window_input_hint">Enter code / password</string>
-    <string name="home_floating_window_title">Floating window mode</string>
+    <string name="floating_window_collapse">折叠/展开</string>
+    <string name="floating_window_hint_idle">就绪，等待请求…</string>`n    <string name="floating_window_hint_searching">正在搜索设备…</string>`n    <string name="floating_window_hint_no_device">未找到配对设备</string>
+    <string name="floating_window_hint_waiting_pair">已找到设备，请输入配对码</string>
+    <string name="floating_window_hint_waiting_auth">请输入授权密码</string>
+    <string name="floating_window_hint_processing">处理中…</string>
+    <string name="floating_window_hint_success">成功！</string>
+    <string name="floating_window_hint_failed">失败，请重试</string>
+    <string name="floating_window_input_hint">输入配对码</string>
+    <string name="home_floating_window_title">悬浮窗模式</string>
     <string name="home_floating_window_description">Keep a floating window on screen for pairing and authorization. Works even when the app cannot show dialogs.</string>
-    <string name="floating_window_start">Start floating window</string>
-    <string name="floating_window_stop">Stop floating window</string>
-    <string name="floating_window_permission_required">Display over other apps permission is required. Please grant it in settings.</string>
-    <string name="floating_window_running">Floating window is running</string>
-    <string name="floating_window_not_running">Floating window is not running</string>
-    <string name="home_wireless_adb_pair_via_floating_window">Pair via floating window</string>
-    <string name="floating_window_pair_via_overlay">Pair via floating window</string>
-    <string name="settings_floating_window">Floating window mode</string>
+    <string name="floating_window_start">开启悬浮窗</string>
+    <string name="floating_window_stop">关闭悬浮窗</string>
+    <string name="floating_window_permission_required">需要悬浮窗权限，请在设置中授予</string>
+    <string name="floating_window_running">悬浮窗运行中</string>
+    <string name="floating_window_not_running">悬浮窗未运行</string>
+    <string name="home_wireless_adb_pair_via_floating_window">通过悬浮窗配对</string>
+    <string name="floating_window_pair_via_overlay">通过悬浮窗配对</string>
+    <string name="settings_floating_window">悬浮窗模式</string>
     <string name="settings_floating_window_summary">Keep a floating window on screen for pairing and authorization</string>
 </resources>

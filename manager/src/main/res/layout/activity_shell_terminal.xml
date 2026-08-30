@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimaryContainer"
+        app:titleTextColor="?attr/colorOnPrimaryContainer"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:menu="@menu/terminal_menu" />
+
+    <HorizontalScrollView
+        android:id="@+id/quick_bar_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:background="?attr/colorSurfaceVariant">
+
+        <LinearLayout
+            android:id="@+id/quick_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp" />
+
+    </HorizontalScrollView>
+
+    <ScrollView
+        android:id="@+id/output_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:background="#1e1e2e">
+
+        <TextView
+            android:id="@+id/output_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:fontFamily="monospace"
+            android:textSize="13sp"
+            android:textColor="#cdd6f4"
+            android:textIsSelectable="true"
+            android:lineSpacingExtra="2dp"
+            tools:text="$ whoami\nshell\n$ " />
+
+    </ScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="?attr/colorSurface"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$"
+            android:fontFamily="monospace"
+            android:textSize="15sp"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginEnd="8dp" />
+
+        <EditText
+            android:id="@+id/input_field"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/terminal_input_hint"
+            android:fontFamily="monospace"
+            android:textSize="14sp"
+            android:background="@null"
+            android:imeOptions="actionSend"
+            android:inputType="text|textNoSuggestions"
+            android:maxLines="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/send_button"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:icon="@drawable/ic_terminal_send_24"
+            app:iconTint="?attr/colorPrimary" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -70,7 +70,6 @@ class HomeAdapter(private val homeModel: HomeViewModel, private val appsModel: A
                 addItem(StartRootViewHolder.CREATOR, rootRestart, ID_START_ROOT)
             }
         }
-        addItem(FloatingWindowViewHolder.CREATOR, null, ID_FLOATING_WINDOW)
         addItem(LearnMoreViewHolder.CREATOR, null, ID_LEARN_MORE)
         notifyDataSetChanged()
     }
