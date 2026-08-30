@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗布局：极简设计，只有一个输入框 + 提示文字 + 折叠按钮 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/overlay_background"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:elevation="8dp">
+
+    <!-- 顶部行：折叠图标 + 应用标识 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <ImageView
+            android:id="@+id/overlay_collapse"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_floating_window_24"
+            android:contentDescription="@string/floating_window_collapse"
+            android:alpha="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="@string/floating_window_title"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- 展开区域：提示文字 + 输入框 -->
+    <LinearLayout
+        android:id="@+id/overlay_expanded"
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 提示文字 -->
+        <TextView
+            android:id="@+id/overlay_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/floating_window_hint_idle"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp"
+            android:maxLines="3"
+            android:ellipsize="end" />
+
+        <!-- 输入框 -->
+        <EditText
+            android:id="@+id/overlay_input"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:hint="@string/floating_window_input_hint"
+            android:textColorHint="?android:textColorHint"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="14sp"
+            android:background="@drawable/overlay_input_background"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:singleLine="true"
+            android:imeOptions="actionGo"
+            android:inputType="text"
+            android:textCursorDrawable="@null" />
+
+    </LinearLayout>
+
+</LinearLayout>
