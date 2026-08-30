@@ -7,6 +7,7 @@ idea.module {
 }
 
 subprojects {
+    tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
     plugins.withId("com.android.base") {
         android {
             compileSdk = 36
@@ -22,13 +23,20 @@ subprojects {
             }
         }
     }
+    plugins.withId('org.jetbrains.kotlin.android') {
+        android.kotlinOptions {
+            jvmTarget = '21'
+        }
+    }
 }
 
 apply from: 'api/manifest.gradle'
 def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
-def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
+def gitCommitIdSafe = gitCommitId.isEmpty() ? 'unknown' : gitCommitId
+def gitCommitCountStr = 'git rev-list --count HEAD'.execute([], project.rootDir).text.trim()
+def gitCommitCount = gitCommitCountStr.isEmpty() ? 1 : Integer.parseInt(gitCommitCountStr)
 def baseVersionName = "${api_version_major}.6.0"
 ext {
     versionCode = gitCommitCount
-    versionName = "${baseVersionName}.r${gitCommitCount}.${gitCommitId}"
+    versionName = "${baseVersionName}.r${gitCommitCount}.${gitCommitIdSafe}"
 }
