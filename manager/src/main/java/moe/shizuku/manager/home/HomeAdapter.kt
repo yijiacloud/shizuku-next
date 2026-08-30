@@ -25,7 +25,6 @@ class HomeAdapter(private val homeModel: HomeViewModel, private val appsModel: A
         private const val ID_START_WADB = 4L
         private const val ID_START_ADB = 5L
         private const val ID_LEARN_MORE = 6L
-        private const val ID_FLOATING_WINDOW = 8L
         private const val ID_ADB_PERMISSION_LIMITED = 7L
     }
 
@@ -52,7 +51,7 @@ class HomeAdapter(private val homeModel: HomeViewModel, private val appsModel: A
             addItem(AdbPermissionLimitedViewHolder.CREATOR, status, ID_ADB_PERMISSION_LIMITED)
         }
 
-        if (isPrimaryUser) {
+        if (isPrimaryUser && !adbPermission) {
             val root = EnvironmentUtils.isRooted()
             val rootRestart = running && status.uid == 0
 

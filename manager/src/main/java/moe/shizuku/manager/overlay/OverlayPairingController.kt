@@ -64,7 +64,9 @@ class OverlayPairingController(private val context: Context) {
      * 开始搜索 ADB 配对服务
      */
     fun startSearch() {
-        if (searching) return
+        if (searching) {
+            stopSearch()
+        }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             Log.w(TAG, "Wireless ADB pairing requires Android 11+")
             FloatingWindowManager.updateHint(

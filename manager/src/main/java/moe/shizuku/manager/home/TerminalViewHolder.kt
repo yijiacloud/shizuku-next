@@ -8,7 +8,7 @@ import moe.shizuku.manager.R
 import moe.shizuku.manager.databinding.HomeItemContainerBinding
 import moe.shizuku.manager.databinding.HomeTerminalBinding
 import moe.shizuku.manager.model.ServiceStatus
-import moe.shizuku.manager.shell.ShellTutorialActivity
+import moe.shizuku.manager.shell.ShellTerminalActivity
 import rikka.recyclerview.BaseViewHolder
 import rikka.recyclerview.BaseViewHolder.Creator
 
@@ -43,6 +43,6 @@ class TerminalViewHolder(private val binding: HomeTerminalBinding, private val r
     }
 
     override fun onClick(v: View) {
-        v.context.startActivity(Intent(v.context, ShellTutorialActivity::class.java))
+        v.context.startActivity(Intent(v.context, ShellTerminalActivity::class.java))
     }
 }

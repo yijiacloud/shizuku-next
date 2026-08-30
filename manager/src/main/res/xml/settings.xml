@@ -12,16 +12,6 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:key="floating_window"
-        android:title="@string/settings_floating_window">
-
-        <rikka.material.preference.MaterialSwitchPreference
-            android:key="floating_window_enabled"
-            android:summary="@string/settings_floating_window_summary"
-            android:title="@string/home_floating_window_title" />
-
-    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_language">
 

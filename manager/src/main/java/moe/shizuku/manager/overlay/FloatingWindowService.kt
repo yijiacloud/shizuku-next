@@ -1,9 +1,13 @@
 package moe.shizuku.manager.overlay
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.Handler
@@ -27,9 +31,6 @@ import moe.shizuku.manager.utils.Logger.LOGGER
 /**
  * 悬浮窗服务 - 极简常驻输入窗
  *
- * 只有一个输入框 + 一条提示文字。
- * 不依赖目标应用弹窗能力，适配阉割悬浮窗的机型。
- *
  * 配对流程（与原版 AdbPairDialogFragment 一致）：
  * 1. 先 mDNS 搜索设备，悬浮窗显示"正在搜索设备…"，输入框隐藏
  * 2. 发现设备后，悬浮窗显示"已找到设备，请输入配对码"，输入框出现
@@ -48,11 +49,14 @@ class FloatingWindowService : Service() {
         const val EXTRA_STATE = "state"
 
         const val STATE_IDLE = 0
-        const val STATE_SEARCHING = 5       // 正在搜索设备
-        const val STATE_WAITING_PAIR = 1     // 找到设备，等待配对码
-        const val STATE_WAITING_AUTH = 2     // 等待授权密码
+        const val STATE_SEARCHING = 5
+        const val STATE_WAITING_PAIR = 1
+        const val STATE_WAITING_AUTH = 2
         const val STATE_SUCCESS = 3
         const val STATE_FAILED = 4
+
+        private const val NOTIFICATION_CHANNEL = "floating_window"
+        private const val NOTIFICATION_ID = 2
 
         fun start(context: Context) {
             val intent = Intent(context, FloatingWindowService::class.java)
@@ -106,6 +110,11 @@ class FloatingWindowService : Service() {
             return
         }
 
+        createNotificationChannel()
+
+        // 必须先 startForeground，否则 startForegroundService 后 5 秒内不调用会崩溃
+        startForeground()
+
         inputReceiver = OverlayInputReceiver()
         registerReceiver(inputReceiver, IntentFilter(OverlayInputReceiver.ACTION_INPUT_SUBMITTED))
 
@@ -122,6 +131,45 @@ class FloatingWindowService : Service() {
             Settings.canDrawOverlays(this)
         } else {
             true
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL,
+                getString(R.string.floating_window_title),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                setShowBadge(false)
+                setSound(null, null)
+            }
+            getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
+        }
+    }
+
+    private fun startForeground() {
+        val notification = Notification.Builder(this, NOTIFICATION_CHANNEL)
+            .setContentTitle(getString(R.string.floating_window_running))
+            .setSmallIcon(R.drawable.ic_system_icon)
+            .setOngoing(true)
+            .build()
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            LOGGER.w(e, "FloatingWindowService: startForeground failed")
+            // 降级：尝试不带 type
+            try {
+                startForeground(NOTIFICATION_ID, notification)
+            } catch (e2: Exception) {
+                LOGGER.w(e2, "FloatingWindowService: startForeground fallback failed")
+            }
         }
     }
 
@@ -196,12 +244,11 @@ class FloatingWindowService : Service() {
     }
 
     private fun setupInput() {
-        // 点击输入框时，移除 FLAG_NOT_FOCUSABLE 以唤起输入法
         inputField.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 requestFocusForInput()
             }
-            false // 让 EditText 正常处理点击
+            false
         }
 
         inputField.setOnEditorActionListener { _, actionId, _ ->
@@ -216,7 +263,6 @@ class FloatingWindowService : Service() {
             }
         }
 
-        // 输入框失去焦点时恢复 FLAG_NOT_FOCUSABLE
         inputField.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus && isFocused) {
                 clearFocusFromInput()
@@ -224,10 +270,6 @@ class FloatingWindowService : Service() {
         }
     }
 
-    /**
-     * 让悬浮窗获得焦点，以便输入框能唤起输入法。
-     * 移除 FLAG_NOT_FOCUSABLE，添加 FLAG_ALT_FOCUSABLE_IM。
-     */
     private fun requestFocusForInput() {
         if (isFocused) return
         isFocused = true
@@ -238,19 +280,14 @@ class FloatingWindowService : Service() {
                     LayoutParams.FLAG_ALT_FOCUSABLE_IM
             windowManager.updateViewLayout(overlayView, layoutParams)
             inputField.requestFocus()
-            // 延迟一点再显示输入法
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as
                     android.view.inputmethod.InputMethodManager
             imm.showSoftInput(inputField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
-            LOGGER.i("FloatingWindowService", "Input focus requested, IME should show")
         } catch (e: Exception) {
             LOGGER.w(e, "FloatingWindowService: requestFocusForInput failed")
         }
     }
 
-    /**
-     * 恢复悬浮窗为无焦点状态。
-     */
     private fun clearFocusFromInput() {
         if (!isFocused) return
         isFocused = false
@@ -258,7 +295,6 @@ class FloatingWindowService : Service() {
             layoutParams.flags = layoutParams.flags or LayoutParams.FLAG_NOT_FOCUSABLE
             layoutParams.flags = layoutParams.flags and LayoutParams.FLAG_ALT_FOCUSABLE_IM.inv()
             windowManager.updateViewLayout(overlayView, layoutParams)
-            LOGGER.i("FloatingWindowService", "Input focus cleared")
         } catch (e: Exception) {
             LOGGER.w(e, "FloatingWindowService: clearFocusFromInput failed")
         }
@@ -306,7 +342,6 @@ class FloatingWindowService : Service() {
             }
             hintText.setTextColor(accentColor)
 
-            // 搜索阶段隐藏输入框；找到设备或等待授权时显示输入框
             when (state) {
                 STATE_SEARCHING, STATE_IDLE -> {
                     inputField.visibility = View.GONE
@@ -341,8 +376,6 @@ class FloatingWindowService : Service() {
 
     private fun submitInput(text: String) {
         LOGGER.i("FloatingWindowService", "User submitted input (length=${text.length})")
-
-        // 提交后恢复无焦点
         clearFocusFromInput()
 
         val intent = Intent(OverlayInputReceiver.ACTION_INPUT_SUBMITTED).apply {

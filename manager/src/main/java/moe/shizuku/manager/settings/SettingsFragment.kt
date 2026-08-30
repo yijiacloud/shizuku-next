@@ -21,7 +21,6 @@ import moe.shizuku.manager.app.ThemeHelper.KEY_USE_SYSTEM_COLOR
 import moe.shizuku.manager.ktx.isComponentEnabled
 import moe.shizuku.manager.ktx.setComponentEnabled
 import moe.shizuku.manager.ktx.toHtml
-import moe.shizuku.manager.overlay.FloatingWindowManager
 import moe.shizuku.manager.receiver.BootCompleteReceiver
 import moe.shizuku.manager.utils.CustomTabsHelper
 import rikka.core.util.ResourceUtils
@@ -44,7 +43,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var translationPreference: Preference
     private lateinit var translationContributorsPreference: Preference
     private lateinit var useSystemColorPreference: TwoStatePreference
-    private lateinit var floatingWindowPreference: TwoStatePreference
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         val context = requireContext()
@@ -62,7 +60,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         translationPreference = findPreference("translation")!!
         translationContributorsPreference = findPreference("translation_contributors")!!
         useSystemColorPreference = findPreference(KEY_USE_SYSTEM_COLOR)!!
-        floatingWindowPreference = findPreference(ShizukuSettings.FLOATING_WINDOW_ENABLED)!!
 
         val componentName = ComponentName(context.packageName, BootCompleteReceiver::class.java.name)
 
@@ -74,19 +71,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     context.packageManager.isComponentEnabled(componentName) == newValue
                 } else false
             }
-        floatingWindowPreference.isChecked = FloatingWindowManager.isRunning()
-        floatingWindowPreference.onPreferenceChangeListener =
-            Preference.OnPreferenceChangeListener { _, newValue ->
-                if (newValue is Boolean) {
-                    if (newValue) {
-                        FloatingWindowManager.start(context)
-                    } else {
-                        FloatingWindowManager.stop(context)
-                    }
-                    FloatingWindowManager.isRunning()
-                } else false
-            }
-
         languagePreference.onPreferenceChangeListener =
             Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
                 if (newValue is String) {
