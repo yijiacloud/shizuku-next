@@ -126,13 +126,14 @@ Shizuku Next 是基于 RikkaApps/Shizuku 的二次开发版本，在保持原项
 
 | 阶段 | 内容 | 状态 |
 |------|------|------|
-| M0 | 克隆原项目，搭建开发环境 | ⏳ 进行中 |
-| M1 | 包名锁定 + 构建验证 | 待开始 |
-| M2 | 模块1 授权模式实现 | 待开始 |
-| M2 | 悬浮窗模式实现（最重要） | 待开始 |
-| M3 | 指令模块实现 | 待开始 |
-| M4 | UI 重构（Win2UI）（Win2UI 风格） | 待开始 |
-| M5 | 模块系统（KSU）（KSU 风格） | 待开始 |
+| M0 | 克隆原项目，搭建开发环境 | ✅ 完成 |
+| M1 | 包名锁定 + 构建验证 | ✅ 完成 |
+| M2 | 悬浮窗模式核心实现（FloatingWindowService/Manager/PairingController） | ✅ 完成 |
+| M2.1 | 配对/授权流程集成（mDNS搜索→输入配对码→AdbPairingClient执行） | ✅ 完成 |
+| M2.2 | 首次编译成功，APK 输出 (out/apk/shizuku-next-debug.apk) | ✅ 完成 |
+| M3 | 指令模块实现（Shell Command Module） | ⏳ 待开始 |
+| M4 | UI 重构（Win2UI 风格） | 待开始 |
+| M5 | 模块系统（KSU 风格） | 待开始 |
 | M6 | 集成测试 + 发布构建 | 待开始 |
 
 ---
