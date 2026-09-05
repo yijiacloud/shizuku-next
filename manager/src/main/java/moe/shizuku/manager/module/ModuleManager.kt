@@ -195,23 +195,32 @@ object ModuleManager {
     }
 
     /**
-     * 卸载模块
-     *
-     * 如果模块有 uninstall.sh，返回该脚本内容供调用方执行
-     * @return 卸载脚本内容，如果没有则返回 null
+     * 获取卸载脚本内容（不删除目录）
      */
-    fun uninstallModule(context: Context, moduleId: String): String? {
+    fun getUninstallScript(context: Context, moduleId: String): String? {
         val moduleDir = getModuleDir(context, moduleId)
         if (!moduleDir.exists()) return null
-
-        // 读取卸载脚本（如果存在）
         val uninstallScript = File(moduleDir, UNINSTALL_SH)
-        val script = if (uninstallScript.exists()) uninstallScript.readText() else null
+        return if (uninstallScript.exists()) uninstallScript.readText() else null
+    }
 
-        // 删除模块目录
+    /**
+     * 删除模块目录
+     */
+    fun deleteModule(context: Context, moduleId: String): Boolean {
+        val moduleDir = getModuleDir(context, moduleId)
+        if (!moduleDir.exists()) return false
         moduleDir.deleteRecursively()
+        Log.i(TAG, "Module deleted: $moduleId")
+        return true
+    }
 
-        Log.i(TAG, "Module uninstalled: $moduleId")
+    /**
+     * 卸载模块（兼容旧代码：读取脚本并删除目录）
+     */
+    fun uninstallModule(context: Context, moduleId: String): String? {
+        val script = getUninstallScript(context, moduleId)
+        deleteModule(context, moduleId)
         return script
     }
 
@@ -254,6 +263,7 @@ object ModuleManager {
      */
     data class InstallResult(
         val module: Module?,
-        val message: String
+        val message: String,
+        val installScript: String? = null
     )
 }

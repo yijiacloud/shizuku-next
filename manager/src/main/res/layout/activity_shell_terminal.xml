@@ -7,15 +7,6 @@
     android:orientation="vertical"
     android:background="?attr/colorSurface">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimaryContainer"
-        app:titleTextColor="?attr/colorOnPrimaryContainer"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:menu="@menu/terminal_menu" />
-
     <HorizontalScrollView
         android:id="@+id/quick_bar_scroll"
         android:layout_width="match_parent"

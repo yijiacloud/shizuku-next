@@ -356,9 +356,16 @@ class FloatingWindowService : Service() {
                 }
             }
 
-            if (state == STATE_SUCCESS || state == STATE_FAILED) {
+            if (state == STATE_SUCCESS) {
+                // 配对成功后延迟 3 秒自动关闭悬浮窗
                 handler.postDelayed({
-                    if (currentState == state) {
+                    if (currentState == STATE_SUCCESS) {
+                        stopSelf()
+                    }
+                }, 3000)
+            } else if (state == STATE_FAILED) {
+                handler.postDelayed({
+                    if (currentState == STATE_FAILED) {
                         updateState(STATE_IDLE)
                     }
                 }, 3000)

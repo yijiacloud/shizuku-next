@@ -110,6 +110,10 @@
             android:name=".module.ModuleConfigActivity"
             android:label="Module Config" />
         <activity
+            android:name=".module.ModuleLogActivity"
+            android:label="模块日志"
+            android:exported="false" />
+        <activity
             android:name=".shell.ShellTerminalActivity"
             android:label="@string/terminal_title"
             android:exported="false" />

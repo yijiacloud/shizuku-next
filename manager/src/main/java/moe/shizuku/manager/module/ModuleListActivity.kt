@@ -19,6 +19,9 @@ import moe.shizuku.manager.databinding.ItemModuleBinding
 import rikka.recyclerview.BaseViewHolder
 import java.io.File
 import java.io.FileOutputStream
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 
 /**
  * 模块列表页面
@@ -65,6 +68,18 @@ class ModuleListActivity : AppBarActivity() {
             pickZipLauncher.launch("application/zip")
         }
 
+        // 处理导航栏 inset，防止 FAB 被 3 按钮导航栏遮挡
+        val density = resources.displayMetrics.density
+        val baseMargin = (16 * density).toInt()
+        ViewCompat.setOnApplyWindowInsetsListener(binding.fab) { view, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val params = view.layoutParams as CoordinatorLayout.LayoutParams
+            params.bottomMargin = baseMargin + navBars.bottom
+            params.rightMargin = baseMargin + navBars.right
+            view.layoutParams = params
+            insets
+        }
+
         loadModules()
     }
 
@@ -104,7 +119,19 @@ class ModuleListActivity : AppBarActivity() {
             val result = ModuleManager.installModule(this, tempFile)
             tempFile.delete()
 
-            Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+            // 如果有安装脚本，启动日志页面执行
+            if (!result.installScript.isNullOrEmpty() && result.module != null) {
+                val moduleDir = ModuleManager.getModuleDirPath(this, result.module.id)
+                val intent = Intent(this, ModuleLogActivity::class.java).apply {
+                    putExtra(ModuleLogActivity.EXTRA_SCRIPT_CONTENT, result.installScript)
+                    putExtra(ModuleLogActivity.EXTRA_MODULE_DIR, moduleDir)
+                    putExtra(ModuleLogActivity.EXTRA_MODULE_ID, result.module.id)
+                    putExtra(ModuleLogActivity.EXTRA_MODE, ModuleLogActivity.MODE_INSTALL)
+                }
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+            }
             loadModules()
 
         } catch (e: Exception) {
@@ -198,9 +225,23 @@ class ModuleListActivity : AppBarActivity() {
                     .setTitle(R.string.module_uninstall_title)
                     .setMessage(getString(R.string.module_uninstall_confirm, module.name))
                     .setPositiveButton(R.string.module_uninstall) { _, _ ->
-                        ModuleManager.uninstallModule(this@ModuleListActivity, module.id)
-                        loadModules()
-                        Toast.makeText(this@ModuleListActivity, R.string.module_uninstalled, Toast.LENGTH_SHORT).show()
+                        val script = ModuleManager.getUninstallScript(this@ModuleListActivity, module.id)
+                        val moduleDir = ModuleManager.getModuleDirPath(this@ModuleListActivity, module.id)
+                        if (!script.isNullOrEmpty()) {
+                            // 有卸载脚本，启动日志页面执行
+                            val intent = Intent(this@ModuleListActivity, ModuleLogActivity::class.java).apply {
+                                putExtra(ModuleLogActivity.EXTRA_SCRIPT_CONTENT, script)
+                                putExtra(ModuleLogActivity.EXTRA_MODULE_DIR, moduleDir)
+                                putExtra(ModuleLogActivity.EXTRA_MODULE_ID, module.id)
+                                putExtra(ModuleLogActivity.EXTRA_MODE, ModuleLogActivity.MODE_UNINSTALL)
+                            }
+                            startActivity(intent)
+                        } else {
+                            // 没有卸载脚本，直接删除
+                            ModuleManager.deleteModule(this@ModuleListActivity, module.id)
+                            loadModules()
+                            Toast.makeText(this@ModuleListActivity, R.string.module_uninstalled, Toast.LENGTH_SHORT).show()
+                        }
                     }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()

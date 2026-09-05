@@ -13,6 +13,12 @@ import moe.shizuku.manager.app.AppBarActivity
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import android.net.Uri
+import android.content.Intent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * 模块配置页面
@@ -26,6 +32,8 @@ import java.io.InputStreamReader
  * - exec(cmd): 执行 shell 命令，输出实时回传到 JS 回调
  * - execScript(scriptPath): 执行脚本文件
  * - getModuleDir(): 获取模块目录路径
+ * - pickFile(): 调起文件选择器（兼容第三方文件管理器）
+ * - pickFileWithMime(mime): 调起文件选择器，指定 MIME 类型
  */
 class ModuleConfigActivity : AppBarActivity() {
 
@@ -37,15 +45,69 @@ class ModuleConfigActivity : AppBarActivity() {
     }
 
     private lateinit var webView: WebView
+    private var pickFileLauncher: ActivityResultLauncher<String>? = null
     private val handler = Handler(Looper.getMainLooper())
     private val executor = java.util.concurrent.Executors.newCachedThreadPool()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val moduleName = intent.getStringExtra(EXTRA_MODULE_NAME) ?: "Module Config"
+        val moduleName = intent.getStringExtra(EXTRA_MODULE_NAME) ?: "模块配置"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = moduleName
+
+        // 文件选择器（使用 GetContent，兼容第三方文件管理器如 MT 管理器）
+        pickFileLauncher = registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                try {
+                    val input = contentResolver.openInputStream(uri)
+                    if (input != null) {
+                        var fileName: String? = null
+                        try {
+                            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                                if (nameIndex >= 0 && cursor.moveToFirst()) {
+                                    fileName = cursor.getString(nameIndex)
+                                }
+                            }
+                        } catch (e: Exception) {
+                        }
+                        if (fileName.isNullOrBlank()) {
+                            fileName = "picked_file_" + System.currentTimeMillis()
+                        }
+                        val tempFile = File(cacheDir, fileName!!)
+                        input.use { ins ->
+                            FileOutputStream(tempFile).use { out ->
+                                ins.copyTo(out)
+                            }
+                        }
+                        val path = tempFile.absolutePath
+                        handler.post {
+                            webView.evaluateJavascript(
+                                "if(window.ShizukuNext&&window.ShizukuNext._onFilePicked){window.ShizukuNext._onFilePicked('" + path.replace("'", "\\'") + "');}",
+                                null
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    handler.post {
+                        webView.evaluateJavascript(
+                            "if(window.ShizukuNext&&window.ShizukuNext._onError){window.ShizukuNext._onError('文件选择失败: " + (e.message ?: "").replace("'", "") + "');}",
+                            null
+                        )
+                    }
+                }
+            } else {
+                handler.post {
+                    webView.evaluateJavascript(
+                        "if(window.ShizukuNext&&window.ShizukuNext._onFilePickCanceled){window.ShizukuNext._onFilePickCanceled();}",
+                        null
+                    )
+                }
+            }
+        }
 
         webView = WebView(this)
 
@@ -90,6 +152,29 @@ class ModuleConfigActivity : AppBarActivity() {
         @JavascriptInterface
         fun getModuleDir(): String {
             return "/data/data/moe.shizuku.privileged.api/files/modules/$moduleId"
+        }
+
+        /**
+         * 调起文件选择器（兼容第三方文件管理器）
+         * 选择结果通过 window.ShizukuNext._onFilePicked(path) 回传
+         */
+        @JavascriptInterface
+        fun pickFile() {
+            handler.post {
+                val mime = "*" + "/" + "*"
+                pickFileLauncher?.launch(mime)
+            }
+        }
+
+        /**
+         * 调起文件选择器，指定 MIME 类型
+         * 例如 pickFileWithMime("image") 只选图片
+         */
+        @JavascriptInterface
+        fun pickFileWithMime(mime: String) {
+            handler.post {
+                pickFileLauncher?.launch(mime)
+            }
         }
 
         /**
@@ -195,7 +280,7 @@ class ModuleConfigActivity : AppBarActivity() {
                     Log.e(TAG, "exec error", e)
                     handler.post {
                         webView.evaluateJavascript(
-                            "if(window.ShizukuNext&&window.ShizukuNext._onError){window.ShizukuNext._onError('${e.message?.replace("'", "\\'")}');}",
+                            "if(window.ShizukuNext&&window.ShizukuNext._onError){window.ShizukuNext._onError('" + (e.message ?: "").replace("'", "\\'") + "');}",
                             null
                         )
                     }
@@ -372,7 +457,21 @@ class ModuleConfigActivity : AppBarActivity() {
             clearLog: function() {
                 var logBox = document.getElementById('sn-log-box');
                 if (logBox) logBox.innerHTML = '';
-            }
+            },
+            _onFilePicked: function(path) {
+                if (this.onFilePicked) this.onFilePicked(path);
+            },
+            _onFilePickCanceled: function() {
+                if (this.onFilePickCanceled) this.onFilePickCanceled();
+            },
+            pickFile: function() {
+                window.ShizukuNative.pickFile();
+            },
+            pickFileWithMime: function(mime) {
+                window.ShizukuNative.pickFileWithMime(mime);
+            },
+            onFilePicked: null,
+            onFilePickCanceled: null
         };
     </script>
 </head>

@@ -20,6 +20,10 @@ import android.widget.ScrollView
 import android.widget.Toast
 import moe.shizuku.manager.R
 import moe.shizuku.manager.app.AppBarActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.google.android.material.appbar.AppBarLayout
+import android.view.Menu
+import android.view.MenuInflater
 import moe.shizuku.manager.databinding.ActivityShellTerminalBinding
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
@@ -54,9 +58,16 @@ class ShellTerminalActivity : AppBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityShellTerminalBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        setSupportActionBar(binding.toolbar)
+        // 使用 ScrollingViewBehavior 让内容定位到工具栏下方
+        val params = CoordinatorLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        params.behavior = AppBarLayout.ScrollingViewBehavior()
+        setContentView(binding.root, params)
+
+        // 使用 AppBarActivity 自带的工具栏
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             title = getString(R.string.terminal_title)
@@ -439,6 +450,11 @@ class ShellTerminalActivity : AppBarActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.terminal_menu, menu)
+        return true
     }
 
     override fun onDestroy() {

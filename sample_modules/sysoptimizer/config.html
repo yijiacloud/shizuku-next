@@ -1,0 +1,95 @@
+<h2 style="text-align:center;margin-bottom:20px;">系统优化大师</h2>
+
+<div class="card">
+    <h3>⚡ 动画速度调节</h3>
+    <p>调整系统动画速度（0=关闭，0.5=快速，1=默认）</p>
+    <select id="anim-speed">
+        <option value="0">关闭动画 (0)</option>
+        <option value="0.3">极速 (0.3)</option>
+        <option value="0.5">快速 (0.5)</option>
+        <option value="1.0" selected>默认 (1.0)</option>
+        <option value="1.5">慢速 (1.5)</option>
+    </select>
+    <button onclick="setAnimSpeed()">应用动画速度</button>
+    <button class="secondary" onclick="execCmd('settings get global window_animation_scale; settings get global transition_animation_scale; settings get global animator_duration_scale')">查看当前速度</button>
+</div>
+
+<div class="card">
+    <h3>🔒 SELinux 模式</h3>
+    <p>查看或切换 SELinux 模式</p>
+    <button onclick="execCmd('getenforce')">查看当前模式</button>
+    <button class="secondary" onclick="execCmd('setenforce 0')">切换为 Permissive</button>
+    <button class="secondary" onclick="execCmd('setenforce 1')">切换为 Enforcing</button>
+</div>
+
+<div class="card">
+    <h3>🔧 系统属性</h3>
+    <p>查看或设置系统属性 (setprop)</p>
+    <input id="prop-name" type="text" placeholder="属性名 (如 ro.debuggable)">
+    <input id="prop-value" type="text" placeholder="属性值 (留空则只读取)">
+    <button onclick="setProp()">设置属性</button>
+    <button class="secondary" onclick="getProp()">读取属性</button>
+</div>
+
+<div class="card">
+    <h3>📁 文件处理</h3>
+    <p>选择文件并查看信息或内容</p>
+    <button onclick="ShizukuNext.pickFile()">选择任意文件</button>
+    <button class="secondary" onclick="ShizukuNext.pickFileWithMime('text/*')">选择文本文件</button>
+    <p id="file-result" style="margin-top:8px;color:#6750a4;font-size:13px;"></p>
+</div>
+
+<div class="card">
+    <h3>📊 常用信息</h3>
+    <button onclick="execCmd('uptime')">运行时间</button>
+    <button class="secondary" onclick="execCmd('top -n 1 | head -20')">CPU 占用</button>
+    <button class="secondary" onclick="execCmd('settings list global | head -30')">全局设置</button>
+</div>
+
+<div class="card">
+    <h3>📝 运行日志</h3>
+    <div style="margin-bottom:8px;">
+        <span id="sn-status" class="status-badge status-idle">就绪</span>
+        <button class="secondary" style="float:right;" onclick="ShizukuNext.clearLog()">清空</button>
+    </div>
+    <div id="sn-log-box" class="log-box">点击上方按钮执行命令...</div>
+</div>
+
+<script>
+    function execCmd(cmd) {
+        ShizukuNext.exec(cmd);
+    }
+
+    function setAnimSpeed() {
+        var speed = document.getElementById('anim-speed').value;
+        execCmd('settings put global window_animation_scale ' + speed +
+                ' && settings put global transition_animation_scale ' + speed +
+                ' && settings put global animator_duration_scale ' + speed +
+                ' && echo "动画速度已设置为 ' + speed + '"');
+    }
+
+    function setProp() {
+        var name = document.getElementById('prop-name').value.trim();
+        var value = document.getElementById('prop-value').value.trim();
+        if (!name) { alert('请输入属性名'); return; }
+        if (value) {
+            execCmd('setprop "' + name + '" "' + value + '" && echo "已设置 ' + name + '=' + value + '"');
+        } else {
+            execCmd('getprop "' + name + '"');
+        }
+    }
+
+    function getProp() {
+        var name = document.getElementById('prop-name').value.trim();
+        if (!name) { alert('请输入属性名'); return; }
+        execCmd('getprop "' + name + '"');
+    }
+
+    ShizukuNext.onFilePicked = function(path) {
+        document.getElementById('file-result').textContent = '已选择: ' + path;
+        execCmd('ls -la "' + path + '" && file "' + path + '" 2>/dev/null');
+    };
+    ShizukuNext.onFilePickCanceled = function() {
+        document.getElementById('file-result').textContent = '已取消选择';
+    };
+</script>

@@ -1,0 +1,77 @@
+<h2 style="text-align:center;margin-bottom:20px;">小黑盒 · 系统工具箱</h2>
+
+<div class="card">
+    <h3>📱 系统信息</h3>
+    <p>查看设备型号、Android 版本、内核等</p>
+    <button onclick="execCmd('getprop ro.product.model; getprop ro.build.version.release; uname -r')">查看系统信息</button>
+</div>
+
+<div class="card">
+    <h3>🧹 清理缓存</h3>
+    <p>清理指定应用缓存</p>
+    <button onclick="execCmd('pm list packages -3 | head -20')">列出第三方应用</button>
+    <button class="secondary" onclick="execCmd('du -sh /data/data/*/cache 2>/dev/null | sort -rh | head -10')">查看缓存占用</button>
+</div>
+
+<div class="card">
+    <h3>🔋 电池信息</h3>
+    <p>查看电池状态和电量</p>
+    <button onclick="execCmd('dumpsys battery')">查看电池信息</button>
+</div>
+
+<div class="card">
+    <h3>🌐 网络信息</h3>
+    <p>查看 IP 地址和网络状态</p>
+    <button onclick="execCmd('ip addr show wlan0 2>/dev/null; ip addr show eth0 2>/dev/null')">查看网络信息</button>
+</div>
+
+<div class="card">
+    <h3>💻 CPU 信息</h3>
+    <p>查看 CPU 核心数和频率</p>
+    <button onclick="execCmd('cat /proc/cpuinfo | grep processor | wc -l; cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq 2>/dev/null')">查看 CPU</button>
+</div>
+
+<div class="card">
+    <h3>💾 内存信息</h3>
+    <p>查看内存使用情况</p>
+    <button onclick="execCmd('free -h; cat /proc/meminfo | head -10')">查看内存</button>
+</div>
+
+<div class="card">
+    <h3>📂 存储信息</h3>
+    <p>查看磁盘使用情况</p>
+    <button onclick="execCmd('df -h /data /sdcard')">查看存储</button>
+</div>
+
+<div class="card">
+    <h3>📁 文件选择测试</h3>
+    <p>测试文件选择功能（支持第三方文件管理器）</p>
+    <button onclick="pickFile()">选择文件</button>
+    <button class="secondary" onclick="pickFileWithMime('image/*')">仅选图片</button>
+    <p id="file-result" style="margin-top:8px;color:#6750a4;font-size:13px;"></p>
+</div>
+
+<div class="card">
+    <h3>📝 运行日志</h3>
+    <div style="margin-bottom:8px;">
+        <span id="sn-status" class="status-badge status-idle">就绪</span>
+        <button class="secondary" style="float:right;" onclick="ShizukuNext.clearLog()">清空</button>
+    </div>
+    <div id="sn-log-box" class="log-box">点击上方按钮执行命令...</div>
+</div>
+
+<script>
+    function execCmd(cmd) {
+        ShizukuNext.exec(cmd);
+    }
+
+    // 文件选择回调
+    ShizukuNext.onFilePicked = function(path) {
+        document.getElementById('file-result').textContent = '已选择: ' + path;
+        // 自动读取文件信息
+        ShizukuNext.exec('ls -la "' + path + '"');
+    };
+    ShizukuNext.onFilePickCanceled = function() {
+        document.getElementById('file-result').textContent = '已取消选择';
+    };
+</script>
