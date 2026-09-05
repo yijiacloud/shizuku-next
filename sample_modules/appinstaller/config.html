@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APK 安装器</title>
+    <style>
+        :root {
+            --bg: #fef7ff;
+            --card: #f3edf7;
+            --primary: #6750a4;
+            --primary-light: #e7e0eb;
+            --text: #1d1b20;
+            --text-secondary: #49454f;
+            --success: #4caf50;
+            --error: #f44336;
+            --warning: #ff9800;
+            --terminal-bg: #1e1e2e;
+            --terminal-text: #cdd6f4;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 16px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        .header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-align: center;
+        }
+        .btn:active { opacity: 0.7; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .btn-row .btn { flex: 1; }
+        .file-info {
+            background: var(--primary-light);
+            border-radius: 12px;
+            padding: 14px;
+            margin: 12px 0;
+            font-size: 14px;
+            display: none;
+        }
+        .file-info.show { display: block; }
+        .file-info .label { color: var(--text-secondary); font-size: 12px; }
+        .file-info .value { color: var(--text); font-weight: 500; word-break: break-all; }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cac4d0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-idle { background: var(--primary-light); color: var(--primary); }
+        .status-running { background: var(--warning); color: white; }
+        .status-success { background: var(--success); color: white; }
+        .status-failed { background: var(--error); color: white; }
+        .log-box {
+            background: var(--terminal-bg);
+            color: var(--terminal-text);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+            min-height: 80px;
+        }
+        .log-line-stderr { color: #f38ba8; }
+        .log-line-stdout { color: #cdd6f4; }
+        .log-line-cmd { color: #89b4fa; }
+        .log-line-info { color: #a6e3a1; }
+        .app-list {
+            margin-top: 12px;
+        }
+        .app-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .app-item .name { flex: 1; font-size: 14px; }
+        .app-item .pkg { font-size: 12px; color: var(--text-secondary); }
+        .app-item .uninstall-btn {
+            padding: 6px 16px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .section-gap { height: 8px; }
+        .center { text-align: center; }
+        .hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 APK 安装器</h1>
+        <p>通过 Shizuku 权限静默安装 APK</p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">安装 APK</div>
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">
+            点击下方按钮选择 APK 文件，将通过 Shizuku 权限静默安装，无需手动确认。
+        </p>
+        <button class="btn btn-primary btn-block" onclick="selectApk()">
+            📁 选择 APK 文件
+        </button>
+        <div id="fileInfo" class="file-info">
+            <div class="label">已选择文件</div>
+            <div id="fileName" class="value"></div>
+            <div class="label" style="margin-top:8px;">文件路径</div>
+            <div id="filePath" class="value" style="font-size:12px;"></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" id="installBtn" onclick="installApk()" disabled>
+                ⬇ 安装
+            </button>
+            <button class="btn btn-secondary" onclick="clearLog()">
+                清空日志
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            安装日志
+            <span id="statusBadge" class="status-badge status-idle" style="margin-left:8px;">就绪</span>
+        </div>
+        <div id="logBox" class="log-box">等待操作...</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">已安装应用</div>
+        <input type="text" id="searchInput" placeholder="输入包名搜索已安装应用..." style="width:100%;padding:10px;border:1px solid #cac4d0;border-radius:10px;font-size:14px;margin-bottom:12px;" oninput="searchApps()">
+        <button class="btn btn-secondary btn-block" onclick="listApps()" style="margin-bottom:12px;">
+            刷新应用列表
+        </button>
+        <div id="appList" class="app-list">
+            <p style="font-size:13px;color:var(--text-secondary);text-align:center;padding:12px;">点击上方按钮加载应用列表</p>
+        </div>
+    </div>
+
+    <p class="hint center">
+        APK 安装器 v1.0 · 基于 Shizuku Next 模块系统
+    </p>
+
+    <div id="sn-log-box" style="display:none;"></div>
+    <span id="sn-status" class="status-badge status-idle" style="display:none;">就绪</span>
+
+    <script>
+        var selectedPath = null;
+
+        function appendLog(text, type) {
+            var logBox = document.getElementById('logBox');
+            var span = document.createElement('span');
+            span.className = 'log-line-' + (type || 'stdout');
+            span.textContent = text + '\n';
+            logBox.appendChild(span);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function setStatus(text, cls) {
+            var badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge ' + cls;
+            badge.textContent = text;
+        }
+
+        function selectApk() {
+            appendLog('正在打开文件选择器...', 'cmd');
+            window.ShizukuNext.pickFile();
+        }
+
+        window.ShizukuNext.onFilePicked = function(path) {
+            selectedPath = path;
+            var name = path.split('/').pop();
+            document.getElementById('fileName').textContent = name;
+            document.getElementById('filePath').textContent = path;
+            document.getElementById('fileInfo').classList.add('show');
+            document.getElementById('installBtn').disabled = false;
+            appendLog('已选择: ' + name, 'info');
+            appendLog('路径: ' + path, 'info');
+        };
+
+        window.ShizukuNext.onFilePickCanceled = function() {
+            appendLog('已取消文件选择', 'stderr');
+        };
+
+        function installApk() {
+            if (!selectedPath) {
+                appendLog('请先选择 APK 文件', 'stderr');
+                return;
+            }
+            var btn = document.getElementById('installBtn');
+            btn.disabled = true;
+            setStatus('安装中...', 'status-running');
+            appendLog('===================================', 'cmd');
+            appendLog('开始安装: ' + selectedPath, 'cmd');
+            appendLog('===================================', 'cmd');
+            window.ShizukuNext.exec('pm install -r "' + selectedPath + '"');
+        }
+
+        window.ShizukuNext._onComplete = function(code) {
+            var logBox = document.getElementById('logBox');
+            var span = document.createElement('span');
+            if (code === 0) {
+                span.className = 'log-line-info';
+                span.textContent = '\n[安装成功]\n';
+                setStatus('安装成功', 'status-success');
+                appendLog('安装完成！', 'info');
+            } else {
+                span.className = 'log-line-stderr';
+                span.textContent = '\n[安装失败 退出码: ' + code + ']\n';
+                setStatus('安装失败', 'status-failed');
+            }
+            logBox.appendChild(span);
+            logBox.scrollTop = logBox.scrollHeight;
+            document.getElementById('installBtn').disabled = false;
+        };
+
+        window.ShizukuNext._onOutput = function(text, type) {
+            appendLog(text, type);
+        };
+
+        window.ShizukuNext._onError = function(msg) {
+            appendLog('错误: ' + msg, 'stderr');
+            setStatus('错误', 'status-failed');
+            document.getElementById('installBtn').disabled = false;
+        };
+
+        function clearLog() {
+            document.getElementById('logBox').innerHTML = '日志已清空\n';
+            setStatus('就绪', 'status-idle');
+        }
+
+        function listApps() {
+            appendLog('正在获取应用列表...', 'cmd');
+            window.ShizukuNext.exec('pm list packages -3');
+        }
+
+        var allApps = [];
+
+        window.ShizukuNext._onOutput = function(text, type) {
+            appendLog(text, type);
+            if (text && text.startsWith('package:')) {
+                var pkg = text.replace('package:', '').trim();
+                allApps.push(pkg);
+            }
+        };
+
+        window.ShizukuNext._onComplete = function(code) {
+            var logBox = document.getElementById('logBox');
+            if (allApps.length > 0) {
+                renderAppList(allApps);
+                appendLog('共找到 ' + allApps.length + ' 个第三方应用', 'info');
+                allApps = [];
+            }
+            var btn = document.getElementById('installBtn');
+            if (btn) btn.disabled = false;
+            if (code === 0) {
+                setStatus('完成', 'status-success');
+            } else if (code !== undefined) {
+                setStatus('失败 (code=' + code + ')', 'status-failed');
+            }
+        };
+
+        function renderAppList(apps) {
+            var container = document.getElementById('appList');
+            container.innerHTML = '';
+            apps.forEach(function(pkg) {
+                var div = document.createElement('div');
+                div.className = 'app-item';
+                div.innerHTML = '<div class="name">' + pkg + '</div>' +
+                    '<button class="uninstall-btn" onclick="uninstallApp(\'' + pkg + '\')">卸载</button>';
+                container.appendChild(div);
+            });
+        }
+
+        function uninstallApp(pkg) {
+            if (!confirm('确定卸载 ' + pkg + ' ?')) return;
+            setStatus('卸载中...', 'status-running');
+            appendLog('卸载: ' + pkg, 'cmd');
+            window.ShizukuNext.exec('pm uninstall ' + pkg);
+        }
+
+        function searchApps() {
+            var query = document.getElementById('searchInput').value.toLowerCase();
+            var items = document.querySelectorAll('.app-item');
+            items.forEach(function(item) {
+                var name = item.querySelector('.name').textContent.toLowerCase();
+                item.style.display = name.indexOf(query) !== -1 ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

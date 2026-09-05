@@ -1,0 +1,6 @@
+id=appinstaller
+name=APK 安装器
+version=v1.0
+versionCode=1
+author=Shizuku Next
+description=静默安装 APK - 支持选择 APK 文件并通过 Shizuku 权限静默安装，无需用户手动确认
