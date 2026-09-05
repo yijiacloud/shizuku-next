@@ -1,77 +1,129 @@
-<h2 style="text-align:center;margin-bottom:20px;">小黑盒 · 系统工具箱</h2>
-
-<div class="card">
-    <h3>📱 系统信息</h3>
-    <p>查看设备型号、Android 版本、内核等</p>
-    <button onclick="execCmd('getprop ro.product.model; getprop ro.build.version.release; uname -r')">查看系统信息</button>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>小黑盒</title>
+<style>
+:root{--bg:#fef7ff;--card:#f3edf7;--primary:#6750a4;--pl:#e7e0eb;--text:#1d1b20;--ts:#49454f;--ok:#4caf50;--err:#f44336;--warn:#ff9800}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);padding:16px;-webkit-tap-highlight-color:transparent}
+.header{text-align:center;padding:16px 0 20px}
+.header h1{font-size:22px;color:var(--primary)}
+.header p{font-size:13px;color:var(--ts);margin-top:4px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:12px;background:var(--card);font-size:14px;font-weight:600;color:var(--ts);cursor:pointer;transition:all .2s}
+.tab.active{background:var(--primary);color:#fff}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:600;margin-bottom:12px;color:var(--primary)}
+.btn{padding:10px 24px;border:none;border-radius:20px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s}
+.btn:active{opacity:.7}
+.btn:disabled{opacity:.4}
+.btn-p{background:var(--primary);color:#fff}
+.btn-s{background:var(--pl);color:var(--primary)}
+.btn-d{background:var(--err);color:#fff}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-warn{background:var(--warn);color:#fff}
+.search-bar{width:100%;padding:12px 16px;border:1px solid #cac4d0;border-radius:24px;font-size:14px;margin-bottom:12px;background:#fff}
+.app-item{display:flex;align-items:center;padding:12px;background:#fff;border-radius:14px;margin-bottom:8px;transition:opacity .2s}
+.app-item.frozen{opacity:.5}
+.app-icon{width:40px;height:40px;border-radius:10px;margin-right:12px;flex-shrink:0;object-fit:cover;background:var(--pl)}
+.app-icon-ph{width:40px;height:40px;border-radius:10px;margin-right:12px;flex-shrink:0;background:var(--pl);display:flex;align-items:center;justify-content:center;font-size:18px}
+.app-info{flex:1;min-width:0}
+.app-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-pkg{font-size:12px;color:var(--ts);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-actions{display:flex;gap:8px;flex-shrink:0}
+.app-actions .btn{padding:6px 14px;font-size:12px;border-radius:16px}
+.status-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600}
+.b-idle{background:var(--pl);color:var(--primary)}
+.b-run{background:var(--warn);color:#fff}
+.b-ok{background:var(--ok);color:#fff}
+.b-err{background:var(--err);color:#fff}
+.loading{text-align:center;padding:40px;color:var(--ts);font-size:14px}
+.empty{text-align:center;padding:40px;color:var(--ts);font-size:14px}
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.dialog{background:#fff;border-radius:24px;padding:24px;max-width:320px;width:90%;text-align:center}
+.dialog h3{font-size:18px;margin-bottom:12px;color:var(--primary)}
+.dialog p{font-size:14px;color:var(--ts);margin-bottom:20px;line-height:1.6;white-space:pre-wrap}
+.dialog .btn-row{display:flex;gap:12px;justify-content:center}
+.toast{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1d1b20;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;z-index:1000;white-space:nowrap}
+.toast.show{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+.sys-btn{display:block;width:100%;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:#fff;font-size:15px;text-align:left;cursor:pointer;color:var(--text)}
+.sys-btn:active{background:var(--pl)}
+.sys-btn .arrow{float:right;color:var(--ts)}
+.info-pre{font-size:13px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;margin:12px 0 20px;line-height:1.6;background:#f5f5f5;padding:12px;border-radius:12px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>小黑盒</h1>
+<p>系统工具箱 · 应用冻结 · 系统信息</p>
 </div>
-
-<div class="card">
-    <h3>🧹 清理缓存</h3>
-    <p>清理指定应用缓存</p>
-    <button onclick="execCmd('pm list packages -3 | head -20')">列出第三方应用</button>
-    <button class="secondary" onclick="execCmd('du -sh /data/data/*/cache 2>/dev/null | sort -rh | head -10')">查看缓存占用</button>
+<div class="tabs">
+<div class="tab active" onclick="switchTab(event,'freeze')">应用冻结</div>
+<div class="tab" onclick="switchTab(event,'info')">系统信息</div>
 </div>
-
-<div class="card">
-    <h3>🔋 电池信息</h3>
-    <p>查看电池状态和电量</p>
-    <button onclick="execCmd('dumpsys battery')">查看电池信息</button>
+<div id="tab-freeze">
+<div class="status-bar">
+<span id="freezeBadge" class="badge b-idle">就绪</span>
+<button class="btn btn-s" onclick="loadApps()" style="margin-left:auto">刷新列表</button>
 </div>
-
-<div class="card">
-    <h3>🌐 网络信息</h3>
-    <p>查看 IP 地址和网络状态</p>
-    <button onclick="execCmd('ip addr show wlan0 2>/dev/null; ip addr show eth0 2>/dev/null')">查看网络信息</button>
+<input type="text" class="search-bar" id="searchBar" placeholder="搜索应用名或包名..." oninput="filterApps()">
+<div id="appList"><div class="empty">点击「刷新列表」加载应用</div></div>
 </div>
-
-<div class="card">
-    <h3>💻 CPU 信息</h3>
-    <p>查看 CPU 核心数和频率</p>
-    <button onclick="execCmd('cat /proc/cpuinfo | grep processor | wc -l; cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq 2>/dev/null')">查看 CPU</button>
+<div id="tab-info" style="display:none">
+<div class="card"><div class="card-title">设备信息</div><div id="deviceInfo"><div class="empty">点击下方按钮查看</div></div></div>
+<button class="sys-btn" onclick="getDeviceInfo()">查看设备信息 <span class="arrow">›</span></button>
+<button class="sys-btn" onclick="getBatteryInfo()">查看电池信息 <span class="arrow">›</span></button>
+<button class="sys-btn" onclick="getStorageInfo()">查看存储信息 <span class="arrow">›</span></button>
+<button class="sys-btn" onclick="getNetInfo()">查看网络信息 <span class="arrow">›</span></button>
+<button class="sys-btn" onclick="getMemInfo()">查看内存信息 <span class="arrow">›</span></button>
 </div>
-
-<div class="card">
-    <h3>💾 内存信息</h3>
-    <p>查看内存使用情况</p>
-    <button onclick="execCmd('free -h; cat /proc/meminfo | head -10')">查看内存</button>
-</div>
-
-<div class="card">
-    <h3>📂 存储信息</h3>
-    <p>查看磁盘使用情况</p>
-    <button onclick="execCmd('df -h /data /sdcard')">查看存储</button>
-</div>
-
-<div class="card">
-    <h3>📁 文件选择测试</h3>
-    <p>测试文件选择功能（支持第三方文件管理器）</p>
-    <button onclick="pickFile()">选择文件</button>
-    <button class="secondary" onclick="pickFileWithMime('image/*')">仅选图片</button>
-    <p id="file-result" style="margin-top:8px;color:#6750a4;font-size:13px;"></p>
-</div>
-
-<div class="card">
-    <h3>📝 运行日志</h3>
-    <div style="margin-bottom:8px;">
-        <span id="sn-status" class="status-badge status-idle">就绪</span>
-        <button class="secondary" style="float:right;" onclick="ShizukuNext.clearLog()">清空</button>
-    </div>
-    <div id="sn-log-box" class="log-box">点击上方按钮执行命令...</div>
-</div>
-
+<div class="overlay" id="confirmOverlay"><div class="dialog">
+<h3 id="dialogTitle">确认</h3><p id="dialogMsg"></p>
+<div class="btn-row"><button class="btn btn-s" onclick="closeDialog()">取消</button><button class="btn btn-d" id="dialogConfirmBtn">确认</button></div>
+</div></div>
+<div class="overlay" id="infoOverlay"><div class="dialog" style="max-width:340px;text-align:left">
+<h3 id="infoTitle" style="text-align:center">信息</h3>
+<pre id="infoContent" class="info-pre"></pre>
+<div style="text-align:center"><button class="btn btn-p" onclick="closeInfo()">关闭</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div id="sn-log-box" style="display:none"></div>
+<span id="sn-status" class="badge b-idle" style="display:none">就绪</span>
 <script>
-    function execCmd(cmd) {
-        ShizukuNext.exec(cmd);
-    }
-
-    // 文件选择回调
-    ShizukuNext.onFilePicked = function(path) {
-        document.getElementById('file-result').textContent = '已选择: ' + path;
-        // 自动读取文件信息
-        ShizukuNext.exec('ls -la "' + path + '"');
-    };
-    ShizukuNext.onFilePickCanceled = function() {
-        document.getElementById('file-result').textContent = '已取消选择';
-    };
+var allApps=[],currentTab="freeze",pendingAction=null;
+var currentCmdCallback=null,currentCmdComplete=null;
+var iconCache={};
+function switchTab(e,tab){currentTab=tab;document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active")});e.target.classList.add("active");document.getElementById("tab-freeze").style.display=tab==="freeze"?"block":"none";document.getElementById("tab-info").style.display=tab==="info"?"block":"none"}
+function setBadge(t,c){var b=document.getElementById("freezeBadge");b.className="badge "+c;b.textContent=t}
+function showToast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},2000)}
+function showDialog(title,msg,cb){document.getElementById("dialogTitle").textContent=title;document.getElementById("dialogMsg").textContent=msg;pendingAction=cb;document.getElementById("confirmOverlay").classList.add("show")}
+function closeDialog(){document.getElementById("confirmOverlay").classList.remove("show");pendingAction=null}
+function closeInfo(){document.getElementById("infoOverlay").classList.remove("show")}
+window.ShizukuNext.onOutput=function(t,ty){if(currentCmdCallback)currentCmdCallback(t,ty)};
+window.ShizukuNext.onComplete=function(c){if(currentCmdComplete)currentCmdComplete(c)};
+window.ShizukuNext.onError=function(m){showToast("错误: "+m);setBadge("错误","b-err")};
+window.ShizukuNext.onFilePicked=function(p){showToast("已选择: "+p.split("/").pop())};
+function execCmd(cmd,onDone){var buf="";currentCmdCallback=function(t,ty){buf+=t+"\n"};currentCmdComplete=function(c){currentCmdCallback=null;currentCmdComplete=null;if(onDone)onDone(c,buf)};window.ShizukuNative.exec(cmd)}
+function loadApps(){setBadge("加载中...","b-run");document.getElementById("appList").innerHTML="<div class=loading>正在加载...</div>";setTimeout(function(){try{var raw=window.ShizukuNative.getAppList();allApps=JSON.parse(raw);renderApps(allApps);setBadge("共"+allApps.length+"个应用","b-idle");loadVisibleIcons()}catch(e){document.getElementById("appList").innerHTML="<div class=empty>加载失败: "+e.message+"</div>";setBadge("失败","b-err")}},100)}
+function loadVisibleIcons(){allApps.forEach(function(app,idx){if(iconCache[app.pkg])return;try{var icon=window.ShizukuNative.getAppIcon(app.pkg);if(icon){iconCache[app.pkg]=icon;var img=document.querySelector("[data-pkg='"+app.pkg+"'] img");if(img){img.src=icon;img.style.display="block";var ph=img.parentElement.querySelector(".app-icon-ph");if(ph)ph.style.display="none"}else{var ph2=document.querySelector("[data-pkg='"+app.pkg+"'] .app-icon-ph");if(ph2){ph2.innerHTML="<img src='"+icon+"' style='width:100%;height:100%;border-radius:10px'>";ph2.style.background="transparent"}}}}}catch(e){}})}
+function renderApps(apps){var c=document.getElementById("appList");if(apps.length===0){c.innerHTML="<div class=empty>没有应用</div>";return}c.innerHTML="";apps.forEach(function(app){var d=document.createElement("div");d.className="app-item"+(app.enabled?"":" frozen");d.setAttribute("data-pkg",app.pkg);var icon=iconCache[app.pkg]?"<img class=app-icon src="+iconCache[app.pkg]+" style=display:block>":"<div class=app-icon-ph>APP</div>";var btn=app.enabled?"<button class=btn-warn onclick=freezeApp('"+app.pkg+"','"+esc(app.name)+"')>冻结</button>":"<button class=btn-ok onclick=unfreezeApp('"+app.pkg+"','"+esc(app.name)+"')>解冻</button>";d.innerHTML=icon+"<div class=app-info><div class=app-name>"+escHtml(app.name)+"</div><div class=app-pkg>"+app.pkg+"</div></div><div class=app-actions>"+btn+"</div>";c.appendChild(d)})}
+function esc(s){return s.replace(/'/g,"\\'")}
+function escHtml(s){return s.replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function filterApps(){var q=document.getElementById("searchBar").value.toLowerCase();renderApps(allApps.filter(function(a){return a.pkg.toLowerCase().indexOf(q)!==-1||a.name.toLowerCase().indexOf(q)!==-1}));loadVisibleIcons()}
+function freezeApp(pkg,name){showDialog("冻结应用","确定要冻结「"+name+"」吗？\n冻结后应用将无法打开，可随时解冻。",function(){setBadge("冻结中...","b-run");execCmd("pm disable-user --user 0 "+pkg,function(c,o){if(c===0){showToast(name+" 已冻结");setBadge("就绪","b-idle")}else{showToast("冻结失败");setBadge("失败","b-err")}loadApps()})})}
+function unfreezeApp(pkg,name){showDialog("解冻应用","确定要解冻「"+name+"」吗？",function(){setBadge("解冻中...","b-run");execCmd("pm enable "+pkg,function(c,o){if(c===0){showToast(name+" 已解冻");setBadge("就绪","b-idle")}else{showToast("解冻失败");setBadge("失败","b-err")}loadApps()})})}
+document.getElementById("dialogConfirmBtn").onclick=function(){if(pendingAction){pendingAction();pendingAction=null}closeDialog()};
+function showInfo(t,c){document.getElementById("infoTitle").textContent=t;document.getElementById("infoContent").textContent=c;document.getElementById("infoOverlay").classList.add("show")}
+function getDeviceInfo(){setBadge("查询中...","b-run");execCmd("getprop ro.product.manufacturer; getprop ro.product.model; getprop ro.build.version.release; getprop ro.build.version.sdk; uname -r; getprop ro.product.cpu.abi",function(c,o){showInfo("设备信息",o);setBadge("就绪","b-idle")})}
+function getBatteryInfo(){setBadge("查询中...","b-run");execCmd("dumpsys battery",function(c,o){showInfo("电池信息",o.substring(0,500));setBadge("就绪","b-idle")})}
+function getStorageInfo(){setBadge("查询中...","b-run");execCmd("df -h /data /sdcard",function(c,o){showInfo("存储信息",o);setBadge("就绪","b-idle")})}
+function getNetInfo(){setBadge("查询中...","b-run");execCmd("ip addr show wlan0 2>/dev/null; ip addr show eth0 2>/dev/null",function(c,o){showInfo("网络信息",o);setBadge("就绪","b-idle")})}
+function getMemInfo(){setBadge("查询中...","b-run");execCmd("free -h; cat /proc/meminfo | head -10",function(c,o){showInfo("内存信息",o);setBadge("就绪","b-idle")})}
 </script>
+</body>
+</html>

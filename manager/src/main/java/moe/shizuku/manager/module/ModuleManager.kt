@@ -166,8 +166,13 @@ object ModuleManager {
                     hasConfig = hasConfig
                 )
 
+                // Read install script content for execution after install
+                val installScriptContent = if (hasInstallScript) {
+                    try { File(moduleDir, INSTALL_SH).readText() } catch (e: Exception) { null }
+                } else null
+
                 Log.i(TAG, "Module installed: ${module.id} v${module.version}")
-                return InstallResult(module, if (isUpdate) "模块已更新" else "模块安装成功")
+                return InstallResult(module, if (isUpdate) "模块已更新" else "模块安装成功", installScriptContent)
 
             }
         } catch (e: Exception) {

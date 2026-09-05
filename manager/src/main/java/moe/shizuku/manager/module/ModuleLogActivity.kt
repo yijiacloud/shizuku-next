@@ -16,6 +16,7 @@ import moe.shizuku.manager.R
 import moe.shizuku.manager.app.AppBarActivity
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.util.concurrent.Executors
 
@@ -51,7 +52,7 @@ class ModuleLogActivity : AppBarActivity() {
         val mode = intent.getStringExtra(EXTRA_MODE) ?: MODE_INSTALL
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
-            title = if (mode == MODE_UNINSTALL) "卸载日志" else "安装日志"
+            title = if (mode == MODE_UNINSTALL) "\u5378\u8f7d\u65e5\u5fd7" else "\u5b89\u88c5\u65e5\u5fd7"
         }
 
         val params = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(
@@ -75,8 +76,8 @@ class ModuleLogActivity : AppBarActivity() {
         val moduleId = intent.getStringExtra(EXTRA_MODULE_ID) ?: ""
 
         if (scriptContent.isNullOrEmpty()) {
-            appendLog("没有安装/卸载脚本，直接完成。\n", COLOR_INFO)
-            statusText.text = "无需执行脚本"
+            appendLog("\u6ca1\u6709\u5b89\u88c5/\u5378\u8f7d\u811a\u672c\uff0c\u76f4\u63a5\u5b8c\u6210\u3002\n", COLOR_INFO)
+            statusText.text = "\u65e0\u9700\u6267\u884c\u811a\u672c"
             btnDone.isEnabled = true
             if (mode == MODE_UNINSTALL && moduleId.isNotEmpty()) {
                 ModuleManager.deleteModule(this, moduleId)
@@ -84,22 +85,18 @@ class ModuleLogActivity : AppBarActivity() {
             return
         }
 
-        val label = if (mode == MODE_UNINSTALL) "卸载" else "安装"
-        appendLog(label + "模块脚本...\n\n", COLOR_CMD, bold = true)
+        val label = if (mode == MODE_UNINSTALL) "\u5378\u8f7d" else "\u5b89\u88c5"
+        appendLog(label + "\u6a21\u5757\u811a\u672c...\n", COLOR_CMD, bold = true)
         executeScript(scriptContent, moduleDir, mode, moduleId)
     }
 
     private fun executeScript(scriptContent: String, moduleDir: String, mode: String, moduleId: String) {
         executor.execute {
             try {
-                val scriptFile = java.io.File(cacheDir, "module_" + mode + ".sh")
-                scriptFile.writeText(scriptContent)
-                scriptFile.setExecutable(true)
-
                 if (!Shizuku.pingBinder()) {
                     handler.post {
-                        appendLog("错误：Shizuku 服务未运行\n", COLOR_ERROR, bold = true)
-                        statusText.text = "执行失败"
+                        appendLog("\u9519\u8bef\uff1aShizuku \u670d\u52a1\u672a\u8fd0\u884c\n", COLOR_ERROR, bold = true)
+                        statusText.text = "\u6267\u884c\u5931\u8d25"
                         btnDone.isEnabled = true
                     }
                     return@execute
@@ -108,8 +105,8 @@ class ModuleLogActivity : AppBarActivity() {
                 val binder = Shizuku.getBinder()
                 if (binder == null || !binder.pingBinder()) {
                     handler.post {
-                        appendLog("错误：无法获取 Shizuku Binder\n", COLOR_ERROR)
-                        statusText.text = "执行失败"
+                        appendLog("\u9519\u8bef\uff1a\u65e0\u6cd5\u83b7\u53d6 Shizuku Binder\n", COLOR_ERROR)
+                        statusText.text = "\u6267\u884c\u5931\u8d25"
                         btnDone.isEnabled = true
                     }
                     return@execute
@@ -117,11 +114,36 @@ class ModuleLogActivity : AppBarActivity() {
 
                 val service = moe.shizuku.server.IShizukuService.Stub.asInterface(binder)
 
-                val cmd = if (moduleDir.isNotEmpty()) {
-                    "MODDIR=\"" + moduleDir + "\" sh \"" + scriptFile.absolutePath + "\" \"" + moduleDir + "\""
-                } else {
-                    "sh \"" + scriptFile.absolutePath + "\""
+                // 1. Create temp dir in /data/local/tmp/ (shell user can access)
+                val tempDir = "/data/local/tmp/sn_mod_" + moduleId
+                runShell(service, "mkdir -p '" + tempDir + "'")
+
+                // 2. Copy all module files to temp dir via stdin (streaming in chunks)
+                val moduleDirFile = File(moduleDir)
+                if (moduleDirFile.exists()) {
+                    moduleDirFile.walkTopDown().forEach { file ->
+                        if (file.isFile) {
+                            val relPath = file.relativeTo(moduleDirFile).path
+                            val destPath = tempDir + "/" + relPath
+                            val parentDir = destPath.substring(0, destPath.lastIndexOf('/'))
+                            runShell(service, "mkdir -p '" + parentDir + "'")
+                            copyFileViaStdin(service, destPath, file)
+                            if (relPath.endsWith(".sh") || relPath == "xpad2" || !relPath.contains(".")) {
+                                runShell(service, "chmod 700 '" + destPath + "'")
+                            }
+                            handler.post { appendLog("\u590d\u5236\u6587\u4ef6: " + relPath + "\n", COLOR_INFO) }
+                        }
+                    }
                 }
+
+                // 3. Write script to temp dir
+                val scriptPath = tempDir + "/" + mode + ".sh"
+                copyBytesViaStdin(service, scriptPath, scriptContent.toByteArray())
+                runShell(service, "chmod 700 '" + scriptPath + "'")
+
+                // 4. Execute script with MODDIR set to temp dir
+                val cmd = "MODDIR='" + tempDir + "' sh '" + scriptPath + "' '" + tempDir + "'"
+                handler.post { appendLog("\u5f00\u59cb\u6267\u884c\u811a\u672c...\n", COLOR_CMD) }
 
                 val parts = arrayOf("sh", "-c", cmd)
                 val process = service.newProcess(parts, null, null)
@@ -141,7 +163,7 @@ class ModuleLogActivity : AppBarActivity() {
                             handler.post { appendLog(text, COLOR_OUTPUT) }
                         }
                     } catch (e: Exception) {
-                        handler.post { appendLog("读取输出失败: " + e.message + "\n", COLOR_ERROR) }
+                        handler.post { appendLog("\u8bfb\u53d6\u8f93\u51fa\u5931\u8d25: " + e.message + "\n", COLOR_ERROR) }
                     } finally {
                         try { stdout.close() } catch (_: Exception) {}
                     }
@@ -167,20 +189,22 @@ class ModuleLogActivity : AppBarActivity() {
 
                 val exitCode = process.waitFor()
                 process.destroy()
-                scriptFile.delete()
+
+                // Cleanup temp dir
+                runShell(service, "rm -rf '" + tempDir + "'")
 
                 handler.post {
                     if (exitCode == 0) {
-                        appendLog("\n[执行成功]\n", COLOR_SUCCESS, bold = true)
-                        statusText.text = "执行成功"
+                        appendLog("\n[\u6267\u884c\u6210\u529f]\n", COLOR_SUCCESS, bold = true)
+                        statusText.text = "\u6267\u884c\u6210\u529f"
                     } else {
-                        appendLog("\n[退出码: " + exitCode + "]\n", COLOR_ERROR, bold = true)
-                        statusText.text = "执行失败 (code=" + exitCode + ")"
+                        appendLog("\n[\u9000\u51fa\u7801: " + exitCode + "]\n", COLOR_ERROR, bold = true)
+                        statusText.text = "\u6267\u884c\u5931\u8d25 (code=" + exitCode + ")"
                     }
 
                     if (mode == MODE_UNINSTALL && moduleId.isNotEmpty()) {
                         ModuleManager.deleteModule(this@ModuleLogActivity, moduleId)
-                        appendLog("模块已删除\n", COLOR_INFO)
+                        appendLog("\u6a21\u5757\u5df2\u5220\u9664\n", COLOR_INFO)
                     }
 
                     appendLog("----------------------------------------\n", COLOR_INFO)
@@ -188,14 +212,66 @@ class ModuleLogActivity : AppBarActivity() {
                 }
             } catch (e: Exception) {
                 handler.post {
-                    appendLog("执行失败: " + e.message + "\n", COLOR_ERROR, bold = true)
-                    statusText.text = "执行失败"
+                    appendLog("\u6267\u884c\u5931\u8d25: " + e.message + "\n", COLOR_ERROR, bold = true)
+                    statusText.text = "\u6267\u884c\u5931\u8d25"
                     btnDone.isEnabled = true
                     if (mode == MODE_UNINSTALL && moduleId.isNotEmpty()) {
                         ModuleManager.deleteModule(this@ModuleLogActivity, moduleId)
                     }
                 }
             }
+        }
+    }
+
+    private fun runShell(service: moe.shizuku.server.IShizukuService, cmd: String): Int {
+        return try {
+            val process = service.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            val code = process.waitFor()
+            process.destroy()
+            code
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
+    private fun copyFileViaStdin(service: moe.shizuku.server.IShizukuService, destPath: String, file: File) {
+        try {
+            val process = service.newProcess(arrayOf("sh", "-c", "cat > '" + destPath + "'"), null, null)
+            val outputStream = ParcelFileDescriptor.AutoCloseOutputStream(process.outputStream)
+            file.inputStream().use { input ->
+                val buffer = ByteArray(8192)
+                var len: Int
+                while (input.read(buffer).also { len = it } > 0) {
+                    outputStream.write(buffer, 0, len)
+                }
+            }
+            outputStream.flush()
+            outputStream.close()
+            process.waitFor()
+            process.destroy()
+        } catch (e: Exception) {
+            handler.post { appendLog("\u590d\u5236\u6587\u4ef6\u5931\u8d25: " + destPath + " - " + e.message + "\n", COLOR_ERROR) }
+        }
+    }
+
+    private fun copyBytesViaStdin(service: moe.shizuku.server.IShizukuService, destPath: String, data: ByteArray) {
+        try {
+            val process = service.newProcess(arrayOf("sh", "-c", "cat > '" + destPath + "'"), null, null)
+            val outputStream = ParcelFileDescriptor.AutoCloseOutputStream(process.outputStream)
+            val buffer = ByteArray(8192)
+            var offset = 0
+            while (offset < data.size) {
+                val len = minOf(buffer.size, data.size - offset)
+                System.arraycopy(data, offset, buffer, 0, len)
+                outputStream.write(buffer, 0, len)
+                offset += len
+            }
+            outputStream.flush()
+            outputStream.close()
+            process.waitFor()
+            process.destroy()
+        } catch (e: Exception) {
+            handler.post { appendLog("\u590d\u5236\u6587\u4ef6\u5931\u8d25: " + destPath + " - " + e.message + "\n", COLOR_ERROR) }
         }
     }
 
