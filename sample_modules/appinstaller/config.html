@@ -283,7 +283,9 @@
             appendLog('===================================', 'cmd');
             appendLog('开始安装: ' + selectedPath, 'cmd');
             appendLog('===================================', 'cmd');
-            window.ShizukuNext.exec('pm install -r "' + selectedPath + '"');
+            var tmpApk = '/data/local/tmp/sn_install.apk';
+            appendLog('正在复制文件到临时目录...', 'cmd');
+            window.ShizukuNext.exec('cat "' + selectedPath + '" > ' + tmpApk + ' && pm install -r ' + tmpApk + ' && rm -f ' + tmpApk);
         }
 
         function clearLog() {
@@ -299,11 +301,34 @@
         }
 
         function uninstallApp(pkg) {
-            if (!confirm('确定卸载 ' + pkg + ' ?')) return;
-            currentAction = 'uninstall';
-            setStatus('卸载中...', 'status-running');
-            appendLog('卸载: ' + pkg, 'cmd');
-            window.ShizukuNext.exec('pm uninstall ' + pkg);
+            showConfirm('卸载确认', '确定要卸载 ' + pkg + ' 吗？', function() {
+                currentAction = 'uninstall';
+                setStatus('卸载中...', 'status-running');
+                appendLog('卸载: ' + pkg, 'cmd');
+                window.ShizukuNext.exec('pm uninstall ' + pkg);
+            });
+        }
+
+        // Custom dialog (no system confirm)
+        function showConfirm(title, msg, onConfirm) {
+            var overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            var dlg = document.createElement('div');
+            dlg.style.cssText = 'background:#fef7ff;border-radius:16px;padding:24px;max-width:320px;width:80%;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+            dlg.innerHTML = '<h3 style="margin:0 0 12px;color:#6750a4;">' + title + '</h3>' +
+                '<p style="margin:0 0 20px;color:#49454f;line-height:1.5;">' + msg + '</p>' +
+                '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+                '<button style="padding:8px 20px;border:none;border-radius:20px;background:#e7e0eb;color:#6750a4;font-size:14px;" onclick="this.closest(\'div\').parentElement.remove()">取消</button>' +
+                '<button id="confirmBtn" style="padding:8px 20px;border:none;border-radius:20px;background:#f44336;color:white;font-size:14px;">确定</button>' +
+                '</div>';
+            overlay.appendChild(dlg);
+            document.body.appendChild(overlay);
+            overlay.querySelector('#confirmBtn').onclick = function() {
+                overlay.remove();
+                onConfirm();
+            };
+            // Click overlay to cancel
+            overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
         }
 
         function renderAppList(apps) {

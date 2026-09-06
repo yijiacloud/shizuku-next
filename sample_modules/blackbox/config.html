@@ -110,7 +110,37 @@ window.ShizukuNext.onError=function(m){showToast("错误: "+m);setBadge("错误"
 window.ShizukuNext.onFilePicked=function(p){showToast("已选择: "+p.split("/").pop())};
 function execCmd(cmd,onDone){var buf="";currentCmdCallback=function(t,ty){buf+=t+"\n"};currentCmdComplete=function(c){currentCmdCallback=null;currentCmdComplete=null;if(onDone)onDone(c,buf)};window.ShizukuNative.exec(cmd)}
 function loadApps(){setBadge("加载中...","b-run");document.getElementById("appList").innerHTML="<div class=loading>正在加载...</div>";setTimeout(function(){try{var raw=window.ShizukuNative.getAppList();allApps=JSON.parse(raw);renderApps(allApps);setBadge("共"+allApps.length+"个应用","b-idle");loadVisibleIcons()}catch(e){document.getElementById("appList").innerHTML="<div class=empty>加载失败: "+e.message+"</div>";setBadge("失败","b-err")}},100)}
-function loadVisibleIcons(){allApps.forEach(function(app,idx){if(iconCache[app.pkg])return;try{var icon=window.ShizukuNative.getAppIcon(app.pkg);if(icon){iconCache[app.pkg]=icon;var img=document.querySelector("[data-pkg='"+app.pkg+"'] img");if(img){img.src=icon;img.style.display="block";var ph=img.parentElement.querySelector(".app-icon-ph");if(ph)ph.style.display="none"}else{var ph2=document.querySelector("[data-pkg='"+app.pkg+"'] .app-icon-ph");if(ph2){ph2.innerHTML="<img src='"+icon+"' style='width:100%;height:100%;border-radius:10px'>";ph2.style.background="transparent"}}}}}catch(e){}})}
+function loadVisibleIcons(){
+    var pending=allApps.filter(function(a){return !iconCache[a.pkg]});
+    var batch=5;
+    function loadBatch(){
+        if(pending.length===0)return;
+        var items=pending.splice(0,batch);
+        items.forEach(function(app){
+            try{
+                var icon=window.ShizukuNative.getAppIcon(app.pkg);
+                if(icon){
+                    iconCache[app.pkg]=icon;
+                    var img=document.querySelector("[data-pkg='"+app.pkg+"'] img");
+                    if(img){
+                        img.src=icon;
+                        img.style.display="block";
+                        var ph=img.parentElement.querySelector(".app-icon-ph");
+                        if(ph)ph.style.display="none";
+                    }else{
+                        var ph2=document.querySelector("[data-pkg='"+app.pkg+"'] .app-icon-ph");
+                        if(ph2){
+                            ph2.innerHTML="<img src='"+icon+"' style='width:100%;height:100%;border-radius:10px'>";
+                            ph2.style.background="transparent";
+                        }
+                    }
+                }
+            }catch(e){}
+        });
+        if(pending.length>0)setTimeout(loadBatch,50);
+    }
+    loadBatch();
+}
 function renderApps(apps){var c=document.getElementById("appList");if(apps.length===0){c.innerHTML="<div class=empty>没有应用</div>";return}c.innerHTML="";apps.forEach(function(app){var d=document.createElement("div");d.className="app-item"+(app.enabled?"":" frozen");d.setAttribute("data-pkg",app.pkg);var icon=iconCache[app.pkg]?"<img class=app-icon src="+iconCache[app.pkg]+" style=display:block>":"<div class=app-icon-ph>APP</div>";var btn=app.enabled?"<button class=btn-warn onclick=freezeApp('"+app.pkg+"','"+esc(app.name)+"')>冻结</button>":"<button class=btn-ok onclick=unfreezeApp('"+app.pkg+"','"+esc(app.name)+"')>解冻</button>";d.innerHTML=icon+"<div class=app-info><div class=app-name>"+escHtml(app.name)+"</div><div class=app-pkg>"+app.pkg+"</div></div><div class=app-actions>"+btn+"</div>";c.appendChild(d)})}
 function esc(s){return s.replace(/'/g,"\\'")}
 function escHtml(s){return s.replace(/</g,"&lt;").replace(/>/g,"&gt;")}

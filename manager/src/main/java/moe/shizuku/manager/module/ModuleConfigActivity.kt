@@ -189,7 +189,53 @@ class ModuleConfigActivity : AppBarActivity() {
             }
         }
 
-                private fun escapeJson(s: String): String {
+                private var cwd: String = "/"
+
+        @JavascriptInterface
+        fun prepareFiles(): String {
+            try {
+                if (!Shizuku.pingBinder()) return ""
+                val binder = Shizuku.getBinder() ?: return ""
+                val service = moe.shizuku.server.IShizukuService.Stub.asInterface(binder)
+
+                val tempDir = "/data/local/tmp/sn_mod_" + modId
+                runShell(service, "mkdir -p '" + tempDir + "'")
+
+                val moduleDir = File(activity.filesDir, "modules/" + modId)
+                if (moduleDir.exists()) {
+                    moduleDir.walkTopDown().forEach { file ->
+                        if (file.isFile) {
+                            val relPath = file.relativeTo(moduleDir).path
+                            val destPath = tempDir + "/" + relPath
+                            val parentDir = destPath.substring(0, destPath.lastIndexOf('/'))
+                            runShell(service, "mkdir -p '" + parentDir + "'")
+                            copyFileViaStdin(service, destPath, file)
+                            runShell(service, "chmod 755 '" + destPath + "'")
+                        }
+                    }
+                }
+                return tempDir
+            } catch (e: Exception) {
+                Log.e(TAG, "prepareFiles error", e)
+                return ""
+            }
+        }
+
+        @JavascriptInterface
+        fun pickFile() {
+            handler.post {
+                activity.pickFileLauncher?.launch("*/*")
+            }
+        }
+
+        @JavascriptInterface
+        fun pickFileWithMime(mime: String) {
+            handler.post {
+                activity.pickFileLauncher?.launch(mime)
+            }
+        }
+
+        private fun escapeJson(s: String): String {
             return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "")
         }
 
@@ -220,7 +266,8 @@ class ModuleConfigActivity : AppBarActivity() {
                     }
 
                     val service = moe.shizuku.server.IShizukuService.Stub.asInterface(binder)
-                    val parts = arrayOf("sh", "-c", cmd)
+                    val wrappedCmd = "cd \"" + cwd + "\" 2>/dev/null; " + cmd + "; printf \"\\n__SN_CWD__:%s\" \"$(pwd)\""
+                    val parts = arrayOf("sh", "-c", wrappedCmd)
                     val process = service.newProcess(parts, null, null)
 
                     val stdout = BufferedReader(
@@ -234,12 +281,17 @@ class ModuleConfigActivity : AppBarActivity() {
                         try {
                             var line: String?
                             while (stdout.readLine().also { line = it } != null) {
-                                val text = line!!.replace("\\", "\\\\").replace("'", "\'").replace("\n", "\\n")
-                                handler.post {
+                                val rawLine = line!!
+                                if (rawLine.startsWith("__SN_CWD__:")) {
+                                    cwd = rawLine.substring("__SN_CWD__:".length)
+                                } else {
+                                    val text = line!!.replace("\\", "\\\\").replace("'", "\'").replace("\n", "\\n")
+                                    handler.post {
                                     webView.evaluateJavascript(
-                                        "if(window.ShizukuNext&&window.ShizukuNext._onOutput){window.ShizukuNext._onOutput('" + text + "','stdout');}",
-                                        null
+                                    "if(window.ShizukuNext&&window.ShizukuNext._onOutput){window.ShizukuNext._onOutput('" + text + "','stdout');}",
+                                    null
                                     )
+                                    }
                                 }
                             }
                         } catch (e: Exception) {
