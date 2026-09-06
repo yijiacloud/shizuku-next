@@ -23,6 +23,7 @@ import moe.shizuku.manager.ktx.setComponentEnabled
 import moe.shizuku.manager.ktx.toHtml
 import moe.shizuku.manager.receiver.BootCompleteReceiver
 import moe.shizuku.manager.utils.CustomTabsHelper
+import moe.shizuku.manager.utils.UpdateChecker
 import rikka.core.util.ResourceUtils
 import rikka.material.app.LocaleDelegate
 import rikka.recyclerview.addEdgeSpacing
@@ -129,6 +130,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             context.getString(R.string.settings_translation_summary, context.getString(R.string.app_name))
         translationPreference.setOnPreferenceClickListener {
             CustomTabsHelper.launchUrlOrCopy(context, context.getString(R.string.translation_url))
+            true
+        }
+
+        // Update check preference
+        val checkUpdateNowPreference: Preference = findPreference("check_update_now")!!
+        checkUpdateNowPreference.setOnPreferenceClickListener {
+            UpdateChecker.check(context)
             true
         }
 

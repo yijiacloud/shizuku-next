@@ -19,6 +19,7 @@ import moe.shizuku.manager.ktx.toHtml
 import moe.shizuku.manager.management.appsViewModel
 import moe.shizuku.manager.settings.SettingsActivity
 import moe.shizuku.manager.utils.AppIconCache
+import moe.shizuku.manager.utils.UpdateChecker
 import rikka.core.ktx.unsafeLazy
 import rikka.lifecycle.Status
 import rikka.lifecycle.viewModels
@@ -44,6 +45,9 @@ abstract class HomeActivity : AppBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check for updates on app start
+        UpdateChecker.checkIfNeeded(this)
 
         val binding = HomeActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)

@@ -54,4 +54,22 @@
 
     </PreferenceCategory>
 
+
+    <PreferenceCategory
+        android:key="update"
+        android:title="更新">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            android:defaultValue="true"
+            android:key="auto_update_enabled"
+            android:summary="自动检查 GitHub 上的新版本"
+            android:title="自动检查更新" />
+
+        <Preference
+            android:key="check_update_now"
+            android:title="立即检查更新"
+            android:summary="手动检查是否有新版本" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>
