@@ -1,6 +1,6 @@
 # Shizuku Next
 
-> 基于 [Shizuku](https://github.com/RikkaApps/Shizuku) 的增强分支，新增悬浮窗配对、终端、模块系统等功能。
+> 基于 [Shizuku](https://github.com/RikkaApps/Shizuku) 的增强分支，新增悬浮窗配对、终端、模块系统、MD3 主题等功能。
 
 ## 功能特性
 
@@ -24,6 +24,7 @@
 - 流式实时输出（stdout / stderr 双线程）
 - 命令历史记录（上下键翻阅）
 - 彩色终端输出
+- 上下文感知（cd 命令切换目录后保持）
 
 #### 3. 模块系统（参考 KernelSU）
 - 从 zip 文件安装模块
@@ -31,6 +32,25 @@
 - 支持 HTML 配置界面（WebView + JS 桥接）
 - 支持安装脚本、卸载脚本、操作脚本
 - 实时日志输出
+- 文件选择器支持（兼容第三方文件管理器）
+- 安装/卸载日志输出
+
+#### 4. MD3 主题（v0.11 新增）
+- Material Design 3 Next 主题风格
+- 在设置中一键切换原版风格与 MD3 风格
+- 浅色/深色模式自动适配
+- 卡片、图标、按钮遵循 MD3 设计规范
+- 模块 WebUI 页面支持 MD3 CSS
+
+#### 5. 自动更新检查（v0.10 新增）
+- 启动时自动检查 GitHub 最新版本
+- 设置中可手动检查更新
+
+## 下载
+
+前往 [Releases](../../releases) 页面下载最新版本。
+
+当前最新版本：**v0.11** — [下载 APK](../../releases/download/v0.11/shizuku-v0.11-debug.apk)
 
 ## 模块开发
 
@@ -50,7 +70,12 @@ module.zip
 
 ### 示例模块
 
-项目包含一个示例模块 `sample_module.zip`，演示模块系统的基本功能。
+项目包含以下示例模块：
+- `sample_module.zip` — 基础功能演示
+- KivenRoot — 提权操作模块
+- Blackbox — 应用管理模块（冻结/解冻应用）
+- AppInstaller — 应用安装/卸载模块
+- SysOptimizer — 系统优化模块
 
 ## 构建
 
@@ -80,8 +105,3 @@ module.zip
 ## License
 
 遵循原项目 Shizuku 的许可证。
-
-## 下载
-
-前往 [Releases](../../releases) 页面下载最新版本。
-
