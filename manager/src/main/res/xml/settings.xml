@@ -52,6 +52,12 @@
             android:key="use_system_color"
             android:title="@string/settings_use_system_color" />
 
+        <rikka.material.preference.MaterialSwitchPreference
+            android:key="use_md3_theme"
+            android:defaultValue="false"
+            android:summary="启用 Material Design 3 Next 主题风格"
+            android:title="MD3 风格" />
+
     </PreferenceCategory>
 
 

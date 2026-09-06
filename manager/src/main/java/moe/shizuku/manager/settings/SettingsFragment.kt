@@ -44,6 +44,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var translationPreference: Preference
     private lateinit var translationContributorsPreference: Preference
     private lateinit var useSystemColorPreference: TwoStatePreference
+    private lateinit var md3ThemePreference: TwoStatePreference
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         val context = requireContext()
@@ -60,6 +61,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         startupPreference = findPreference("startup")!!
         translationPreference = findPreference("translation")!!
         translationContributorsPreference = findPreference("translation_contributors")!!
+        md3ThemePreference = findPreference(ShizukuSettings.USE_MD3_THEME)!!
         useSystemColorPreference = findPreference(KEY_USE_SYSTEM_COLOR)!!
 
         val componentName = ComponentName(context.packageName, BootCompleteReceiver::class.java.name)
@@ -126,7 +128,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
             useSystemColorPreference.isVisible = false
         }
 
-        translationPreference.summary =
+                // MD3 主题开关
+        md3ThemePreference.onPreferenceChangeListener =
+            Preference.OnPreferenceChangeListener { _: Preference?, value: Any? ->
+                if (value is Boolean) {
+                    activity?.recreate()
+                }
+                true
+            }
+
+translationPreference.summary =
             context.getString(R.string.settings_translation_summary, context.getString(R.string.app_name))
         translationPreference.setOnPreferenceClickListener {
             CustomTabsHelper.launchUrlOrCopy(context, context.getString(R.string.translation_url))

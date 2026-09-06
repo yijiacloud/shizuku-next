@@ -28,6 +28,8 @@ public class ShizukuSettings {
     // Shizuku Next - 悬浮窗模式
     public static final String FLOATING_WINDOW_ENABLED = "floating_window_enabled";
     public static final String FLOATING_WINDOW_RUNNING = "floating_window_running";
+    // Shizuku Next - MD3 主题
+    public static final String USE_MD3_THEME = "use_md3_theme";
 
     private static SharedPreferences sPreferences;
 

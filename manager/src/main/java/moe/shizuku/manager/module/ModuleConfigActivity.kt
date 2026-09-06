@@ -16,6 +16,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import moe.shizuku.manager.R
 import moe.shizuku.manager.app.AppBarActivity
+import rikka.core.res.isNight
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
 import java.io.File
@@ -434,10 +435,58 @@ class ModuleConfigActivity : AppBarActivity() {
     }
 
         private fun wrapHtml(content: String, moduleName: String, modId: String): String {
-        return """<!DOCTYPE html><html><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+        val isMD3 = moe.shizuku.manager.app.ThemeHelper.isMD3Theme(this)
+        val isDark = resources.configuration.isNight()
+
+        val css = if (isMD3) {
+            val bg = if (isDark) "#1C1B1F" else "#FFFFFF"
+            val surface = if (isDark) "#28272D" else "#F0F1F3"
+            val surfaceLow = if (isDark) "#242329" else "#F8F9FA"
+            val surfaceHigh = if (isDark) "#2E2C33" else "#E8E9EB"
+            val primary = if (isDark) "#B0C7FF" else "#5C6BC0"
+            val onPrimary = if (isDark) "#1A237E" else "#FFFFFF"
+            val primaryContainer = if (isDark) "#3D4A8F" else "#E8EAF6"
+            val onPrimaryContainer = if (isDark) "#E8EAF6" else "#1A237E"
+            val onBg = if (isDark) "#E6E1E5" else "#1C1B1F"
+            val onSurfaceVariant = if (isDark) "#CAC4D0" else "#49454F"
+            val outline = if (isDark) "#938F99" else "#79747E"
+            val outlineVariant = if (isDark) "#49454F" else "#CAC4D0"
+            val error = if (isDark) "#F2B8B5" else "#B3261E"
+            val errorContainer = if (isDark) "#8C1D18" else "#F9DEDC"
+            val textColor = if (isDark) "#E6E1E5" else "#1C1B1F"
+            val secondaryContainer = if (isDark) "#4A4458" else "#E8DEF8"
+            val onSecondaryContainer = if (isDark) "#E8DEF8" else "#1D192B"
+            """* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; padding: 16px; background: $bg; color: $textColor; -webkit-font-smoothing: antialiased; transition: background-color 0.3s; }
+h1,h2,h3 { margin-bottom: 12px; font-weight: 600; }
+h1 { font-size: 1.5rem; } h2 { font-size: 1.25rem; } h3 { font-size: 1.1rem; }
+p { margin-bottom: 12px; line-height: 1.6; color: $onSurfaceVariant; }
+button { padding: 10px 24px; border: none; border-radius: 20px; background: $primary; color: $onPrimary; font-size: 14px; font-weight: 500; cursor: pointer; margin: 4px 0; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+button:active { transform: scale(0.95); border-radius: 14px; }
+button:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
+button.secondary { background: $secondaryContainer; color: $onSecondaryContainer; box-shadow: none; }
+button.outlined { background: transparent; color: $primary; border: 1px solid $outline; box-shadow: none; }
+button.outlined:active { background: $primaryContainer; }
+input,select,textarea { padding: 12px 16px; border: 1px solid $outlineVariant; border-radius: 12px; font-size: 14px; width: 100%; margin-bottom: 12px; background: $surfaceLow; color: $textColor; transition: border-color 0.2s; }
+input:focus,select:focus,textarea:focus { border-color: $primary; outline: none; }
+.card { background: $surface; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.log-box { background: $surfaceHigh; color: $textColor; border-radius: 12px; padding: 12px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; min-height: 100px; }
+.log-line-stderr { color: $error; }
+.log-line-stdout { color: $textColor; }
+.status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+.status-idle { background: $secondaryContainer; color: $onSecondaryContainer; }
+.status-running { background: #FFB74D; color: white; }
+.status-success { background: #4CAF50; color: white; }
+.status-failed { background: $errorContainer; color: $error; }
+.divider { height: 1px; background: $outlineVariant; margin: 16px 0; border: none; }
+.app-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: $surfaceLow; border-radius: 12px; margin-bottom: 8px; transition: background 0.2s; }
+.app-item:active { background: $surface; }
+.app-icon { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; }
+.app-name { font-weight: 500; font-size: 14px; color: $textColor; }
+.app-pkg { font-size: 12px; color: $onSurfaceVariant; }
+"""
+        } else {
+            """* { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; background: #fef7ff; color: #1d1b20; }
 h1,h2,h3 { margin-bottom: 12px; }
 p { margin-bottom: 12px; line-height: 1.6; }
@@ -455,7 +504,12 @@ input,select,textarea { padding: 10px; border: 1px solid #cac4d0; border-radius:
 .status-running { background: #ffb74d; color: white; }
 .status-success { background: #4caf50; color: white; }
 .status-failed { background: #f44336; color: white; }
-</style>
+"""
+        }
+
+        return """<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>$css</style>
 <script>
 window.ShizukuNext={
 moduleId:'$modId',moduleName:'$moduleName',

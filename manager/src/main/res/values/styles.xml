@@ -43,9 +43,9 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/shape_circle_icon_background</item>
-        <item name="android:tint">?colorOnPrimaryContainer</item>
+        <item name="android:tint">?attr/cardIconTintColor</item>
         <item name="android:tintMode">src_in</item>
-        <item name="android:backgroundTint">?colorPrimaryContainer</item>
+        <item name="android:backgroundTint">?attr/cardIconBgColor</item>
         <item name="android:backgroundTintMode">src_in</item>
     </style>
 

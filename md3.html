@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>M3 表现力展示 · Pro</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+
+    <style>
+        :root { --nav-width: 260px; --header-h: 64px; }
+
+        .light {
+            --md-primary: #5C6BC0; --md-on-primary: #FFFFFF; --md-primary-container: #E8EAF6;
+            --md-on-primary-container: #1A237E; --md-secondary: #625B71; --md-secondary-container: #E8DEF8;
+            --md-on-secondary-container: #1D192B; --md-tertiary: #7D5260; --md-tertiary-container: #FFD8E4;
+            --md-background: #FFFFFF; --md-on-background: #1C1B1F; --md-surface: #FFFFFF;
+            --md-on-surface: #1C1B1F; --md-surface-variant: #F5F5F5; --md-on-surface-variant: #49454F;
+            --md-outline: #79747E; --md-outline-variant: #CAC4D0; --md-surface-container-low: #F8F9FA;
+            --md-surface-container: #F0F1F3; --md-surface-container-high: #E8E9EB;
+            --md-surface-container-highest: #E0E1E3; --md-error: #B3261E; --md-error-container: #F9DEDC;
+            --elevation-1: 0px 1px 2px rgba(0,0,0,0.08), 0px 1px 3px 1px rgba(0,0,0,0.06);
+            --elevation-2: 0px 2px 6px 2px rgba(0,0,0,0.06), 0px 1px 2px rgba(0,0,0,0.10);
+            --elevation-3: 0px 4px 8px 3px rgba(0,0,0,0.08), 0px 1px 3px rgba(0,0,0,0.10);
+            --ripple: rgba(92,107,192,0.35); --ripple2: rgba(92,107,192,0.55);
+            --refract1: rgba(255,255,255,0.45); --refract2: rgba(92,107,192,0.25); --refract3: rgba(200,210,255,0.3);
+        }
+
+        .dark {
+            --md-primary: #B0C7FF; --md-on-primary: #1A237E; --md-primary-container: #3D4A8F;
+            --md-on-primary-container: #E8EAF6; --md-secondary: #CBC2DC; --md-secondary-container: #4A4458;
+            --md-on-secondary-container: #E8DEF8; --md-tertiary: #EFB8C8; --md-tertiary-container: #633B48;
+            --md-background: #1C1B1F; --md-on-background: #E6E1E5; --md-surface: #1C1B1F;
+            --md-on-surface: #E6E1E5; --md-surface-variant: #2D2A31; --md-on-surface-variant: #CAC4D0;
+            --md-outline: #938F99; --md-outline-variant: #49454F; --md-surface-container-low: #242329;
+            --md-surface-container: #28272D; --md-surface-container-high: #2E2C33;
+            --md-surface-container-highest: #343239; --md-error: #F2B8B5; --md-error-container: #8C1D18;
+            --elevation-1: 0px 1px 3px rgba(0,0,0,0.25); --elevation-2: 0px 2px 6px rgba(0,0,0,0.30);
+            --elevation-3: 0px 6px 12px rgba(0,0,0,0.35);
+            --ripple: rgba(176,199,255,0.35); --ripple2: rgba(176,199,255,0.55);
+            --refract1: rgba(255,255,255,0.12); --refract2: rgba(176,199,255,0.2); --refract3: rgba(200,210,255,0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--md-background); color: var(--md-on-background);
+            display: flex; min-height: 100vh; min-height: 100dvh;
+            transition: background-color 0.4s cubic-bezier(0.4,0,0.2,1), color 0.4s cubic-bezier(0.4,0,0.2,1);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1 { font-size: clamp(1.2rem, 4vw, 1.75rem); font-weight: 700; }
+        h2 { font-size: clamp(1rem, 3.5vw, 1.35rem); font-weight: 600; margin: 1.5rem 0 0.75rem 0; }
+        h3 { font-size: clamp(0.9rem, 3vw, 1.15rem); font-weight: 600; }
+
+        /* ========== 侧边栏 ========== */
+        .nav-drawer {
+            width: var(--nav-width); min-width: var(--nav-width);
+            background: var(--md-surface-container-low); padding: 1.25rem 0.75rem;
+            display: flex; flex-direction: column; gap: 0.2rem;
+            border-right: 1px solid var(--md-outline-variant);
+            height: 100vh; height: 100dvh; position: sticky; top: 0; z-index: 50;
+            transition: all 0.35s ease; overflow-y: auto;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.5rem 0.75rem 1.25rem; font-size: 1.15rem; font-weight: 700; color: var(--md-primary);
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.85rem;
+            padding: 0.65rem 0.85rem; border-radius: 28px;
+            cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            font-size: 0.88rem; font-weight: 500; color: var(--md-on-surface-variant);
+            border: none; background: transparent; width: 100%; text-align: left;
+            font-family: inherit; position: relative; overflow: hidden;
+            -webkit-tap-highlight-color: transparent; white-space: nowrap;
+        }
+        .nav-item:hover { background: rgba(92,107,192,0.06); color: var(--md-on-surface); }
+        .nav-item:active { transform: scale(0.95); border-radius: 14px !important; transition: all 0.1s ease; }
+        .nav-item.active { background: var(--md-primary-container); color: var(--md-on-primary-container); font-weight: 600; }
+        .nav-item.active::before {
+            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: 3px; height: 22px; border-radius: 0 3px 3px 0; background: var(--md-primary);
+            animation: indicator 0.35s ease;
+        }
+        @keyframes indicator { 0% { height:0; opacity:0; } 100% { height:22px; opacity:1; } }
+        .nav-item .material-symbols-rounded { font-size: 22px; flex-shrink: 0; transition: transform 0.25s ease; }
+        .nav-item:active .material-symbols-rounded { transform: scale(1.2); }
+        .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 500; }
+
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+
+        /* ========== 液态玻璃标题栏 - 缩小折射光效 ========== */
+        .glass-header {
+            position: sticky; top: 0; z-index: 100;
+            height: var(--header-h); min-height: var(--header-h);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            background: rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgba(200,200,210,0.3);
+            box-shadow: 0 6px 28px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.35);
+            display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem;
+            overflow: hidden; position: relative;
+        }
+        .dark .glass-header { background: rgba(28,27,31,0.2); }
+        .glass-header .shimmer {
+            position: absolute; top: -50%; left: -20%; width: 140%; height: 200%;
+            background: conic-gradient(from 0deg, transparent 0deg, transparent 30deg, rgba(255,255,255,0.5) 35deg, transparent 40deg, transparent 120deg, rgba(255,255,255,0.35) 125deg, transparent 130deg, transparent 210deg, rgba(255,255,255,0.4) 215deg, transparent 220deg, transparent 300deg, rgba(255,255,255,0.3) 305deg, transparent 310deg, transparent 360deg);
+            animation: shimmer 5s linear infinite; pointer-events: none; opacity: 0.25; z-index: 0;
+        }
+        .glass-header .spot {
+            position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(6px);
+        }
+        /* 缩小折射光斑尺寸 */
+        .glass-header .spot:nth-child(2) { top: -15px; left: 25%; width: 35px; height: 35px; background: radial-gradient(circle, var(--refract1) 0%, var(--refract2) 30%, transparent 70%); animation: spot1 8s ease-in-out infinite; }
+        .glass-header .spot:nth-child(3) { top: -10px; right: 35%; width: 28px; height: 28px; background: radial-gradient(circle, var(--refract3) 0%, var(--refract1) 40%, transparent 75%); animation: spot2 7s ease-in-out infinite 2s; }
+        .glass-header .spot:nth-child(4) { bottom: -12px; left: 55%; width: 45px; height: 18px; background: radial-gradient(ellipse, var(--refract2) 0%, var(--refract3) 40%, transparent 80%); animation: spot3 6s ease-in-out infinite 1s; }
+        @keyframes shimmer { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spot1 { 0%,100% { transform: translate(0,0) scale(1); opacity:0.5; } 30% { transform: translate(15px,-5px) scale(1.15); opacity:0.7; } 60% { transform: translate(-8px,10px) scale(0.9); opacity:0.4; } }
+        @keyframes spot2 { 0%,100% { transform: translate(0,0) scale(1); opacity:0.4; } 40% { transform: translate(-12px,-6px) scale(1.2); opacity:0.6; } 80% { transform: translate(8px,5px) scale(0.85); opacity:0.3; } }
+        @keyframes spot3 { 0%,100% { transform: translateX(0) scale(1); opacity:0.35; } 50% { transform: translateX(20px) scale(1.3); opacity:0.5; } }
+
+        .header-title { font-size: 1.15rem; font-weight: 700; color: var(--md-on-surface); position: relative; z-index: 1; }
+        .header-spacer { flex: 1; }
+
+        .theme-pill {
+            display: flex; align-items: center; gap: 6px;
+            height: 34px; padding: 0 0.8rem;
+            background: rgba(200,200,220,0.2); backdrop-filter: blur(8px);
+            border: 1px solid rgba(200,200,220,0.4); border-radius: 17px;
+            cursor: pointer; position: relative; z-index: 1; overflow: hidden;
+            font-size: 0.78rem; font-weight: 500; color: var(--md-on-surface);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .theme-pill:active { transform: scale(0.92); border-radius: 8px !important; transition: all 0.1s ease; }
+        .theme-pill:hover { background: rgba(200,200,220,0.35); }
+
+        /* ========== 内容区 ========== */
+        .content { flex: 1; padding: 1.5rem 2rem 3rem; max-width: 1100px; width: 100%; margin: 0 auto; }
+        .page { display: none; }
+        .page.active { display: block; animation: pageIn 0.4s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--md-surface); border: 1px solid var(--md-outline-variant);
+            border-radius: 20px; padding: 1.5rem; box-shadow: var(--elevation-1);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        .card:hover { box-shadow: var(--elevation-2); transform: translateY(-1px); }
+
+        .m3-group { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+        .corner-top { border-radius: 20px 20px 4px 4px !important; }
+        .corner-middle { border-radius: 4px !important; }
+        .corner-bottom { border-radius: 4px 4px 20px 20px !important; }
+
+        .tile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+        .tile {
+            background: var(--md-surface-container-high); border-radius: 20px;
+            padding: 1.1rem 1rem; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 0.5rem;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: var(--elevation-1); min-height: 90px;
+            position: relative; overflow: hidden;
+            -webkit-tap-highlight-color: transparent; user-select: none; border: none;
+        }
+        .tile:hover { background: var(--md-surface-container-highest); box-shadow: var(--elevation-2); transform: translateY(-3px); }
+        .tile:active { transform: scale(0.93); border-radius: 14px !important; transition: all 0.12s ease; }
+        .tile.active { background: var(--md-primary-container); }
+        .tile .tile-icon { font-size: 32px; color: var(--md-primary); transition: all 0.3s ease; }
+        .tile:active .tile-icon { transform: scale(1.25); }
+        .tile .tile-label { font-size: 0.78rem; font-weight: 500; text-align: center; line-height: 1.2; }
+        .tile .tile-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--md-outline); transition: all 0.3s ease; }
+        .tile.active .tile-dot { background: var(--md-primary); box-shadow: 0 0 10px var(--md-primary); }
+
+        .switch-row { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; gap: 12px; min-height: 44px; }
+        .md3-switch-icon { width: 48px; height: 28px; background: var(--md-surface-container-highest); border: 2px solid var(--md-outline); border-radius: 14px; display: inline-flex; align-items: center; padding: 1.5px; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; flex-shrink: 0; }
+        .md3-switch-icon .switch-thumb { width: 21px; height: 21px; border-radius: 50%; background: var(--md-outline); display: flex; align-items: center; justify-content: center; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); color: var(--md-surface-container-highest); overflow: hidden; }
+        .md3-switch-icon .switch-thumb .material-symbols-rounded { font-size: 14px; font-variation-settings:'FILL' 1,'wght' 600,'GRAD' 0,'opsz' 24; line-height:1; display:flex; align-items:center; justify-content:center; }
+        .md3-switch-icon.active { background: var(--md-primary); border-color: var(--md-primary); }
+        .md3-switch-icon.active .switch-thumb { transform: translateX(19px); background: var(--md-on-primary); color: var(--md-primary); }
+        .md3-switch-icon:active .switch-thumb { border-radius: 5px !important; width: 25px !important; transition: all 0.12s ease !important; }
+        .md3-switch-icon:active { transform: scale(0.94); transition: transform 0.1s ease; }
+
+        .checkbox-row { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; min-height: 44px; }
+        .md3-checkbox { width: 18px; height: 18px; border: 2px solid var(--md-outline); border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+        .md3-checkbox.checked { background: var(--md-primary); border-color: var(--md-primary); animation: cb-pop 0.25s ease; }
+        .md3-checkbox .material-symbols-rounded { font-size: 14px; color: var(--md-on-primary); display: none; font-variation-settings:'FILL' 1,'wght' 700,'GRAD' 0,'opsz' 24; line-height:1; }
+        .md3-checkbox.checked .material-symbols-rounded { display: block; animation: ck-appear 0.2s ease forwards; }
+        @keyframes cb-pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes ck-appear { 0% { transform: scale(0); opacity:0; } 100% { transform: scale(1); opacity:1; } }
+
+        .progress-linear { height: 4px; background: var(--md-surface-container-highest); border-radius: 2px; overflow: hidden; }
+        .progress-linear .progress-bar { height: 100%; background: var(--md-primary); border-radius: 2px; animation: linear-ind 1.8s infinite cubic-bezier(0.4,0,0.2,1); width: 50%; }
+        @keyframes linear-ind { 0% { margin-left: -35%; width:35%; } 60% { margin-left: 100%; width:100%; } 100% { margin-left: 100%; width:100%; } }
+
+        .progress-circular { width: 32px; height: 32px; animation: rotate 2s linear infinite; }
+        .progress-circular circle { stroke: var(--md-primary); stroke-dasharray: 90,150; stroke-dashoffset:0; stroke-linecap:round; animation: dash 1.5s ease-in-out infinite; filter: drop-shadow(0 0 3px var(--md-primary)); }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        @keyframes dash { 0% { stroke-dasharray:1,150; } 50% { stroke-dasharray:90,150; stroke-dashoffset:-35; } 100% { stroke-dasharray:90,150; stroke-dashoffset:-124; } }
+
+        .m3-list-item { background: var(--md-surface-container-low); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s ease; gap: 0.75rem; }
+        .m3-list-item:hover { background: var(--md-surface-container-high); }
+        .list-item-content { display: flex; align-items: center; gap: 1rem; min-width: 0; flex: 1; }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            height: 40px; padding: 0 1.25rem; border-radius: 20px;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none;
+            font-family: inherit; position: relative; overflow: hidden;
+            -webkit-tap-highlight-color: transparent; outline: none;
+            transition: border-radius 0.35s cubic-bezier(0.4,0,0.2,1), transform 0.2s ease, background 0.25s ease;
+            white-space: nowrap;
+        }
+        .btn>* { position: relative; z-index: 1; }
+        .btn-filled { background: var(--md-primary); color: var(--md-on-primary); box-shadow: var(--elevation-1); }
+        .btn-filled:hover { box-shadow: var(--elevation-2); filter: brightness(1.05); }
+        .btn-outlined { background: transparent; border: 1px solid var(--md-outline); color: var(--md-primary); }
+        .btn-outlined:hover { border-color: var(--md-primary); background: rgba(92,107,192,0.04); }
+        .btn:active { border-radius: 8px !important; transform: scale(0.95); transition: all 0.1s ease !important; }
+        .btn-ripple {
+            position: absolute; border-radius: 50%;
+            background: radial-gradient(circle, var(--ripple2) 0%, var(--ripple) 40%, transparent 70%);
+            pointer-events: none; z-index: 0; transform: translate(-50%,-50%) scale(0); opacity: 0;
+        }
+        .btn-ripple.expand { animation: rOut 0.5s ease forwards; }
+        .btn-ripple.contract { animation: rIn 0.35s ease forwards; }
+        @keyframes rOut { 0% { transform: translate(-50%,-50%) scale(0); opacity:0.85; } 100% { transform: translate(-50%,-50%) scale(2.5); opacity:0; } }
+        @keyframes rIn { 0% { transform: translate(-50%,-50%) scale(2.5); opacity:0.2; } 100% { transform: translate(-50%,-50%) scale(0); opacity:0; } }
+
+        .dialog-overlay {
+            position: fixed; inset:0; z-index:1000;
+            background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;
+            opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .dialog-overlay.open { opacity:1; pointer-events:auto; }
+        .dialog {
+            background: var(--md-surface-container-high); border-radius: 28px; padding: 1.5rem;
+            max-width: 400px; width: 90%; box-shadow: var(--elevation-3);
+            transform: scale(0.9) translateY(20px); transition: transform 0.35s cubic-bezier(0.2,0,0,1);
+        }
+        .dialog-overlay.open .dialog { transform: scale(1) translateY(0); }
+
+        .bottom-nav {
+            display: none; position: fixed; bottom:0; left:0; right:0; z-index:150;
+            background: var(--md-surface-container-low); border-top:1px solid var(--md-outline-variant);
+            padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom));
+            justify-content: space-around; align-items: center;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        }
+        .bottom-nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 6px 12px; border-radius: 16px; cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            color: var(--md-on-surface-variant); font-size: 0.7rem; font-weight: 500;
+            min-width: 56px; position: relative; overflow: hidden;
+            -webkit-tap-highlight-color: transparent; border: none; background: transparent;
+            font-family: inherit;
+        }
+        .bottom-nav-item:active { transform: scale(0.9); border-radius: 10px !important; transition: all 0.1s ease; }
+        .bottom-nav-item.active { color: var(--md-on-secondary-container); background: var(--md-secondary-container); }
+        .bottom-nav-item .material-symbols-rounded { font-size: 22px; transition: transform 0.25s ease; }
+        .bottom-nav-item:active .material-symbols-rounded { transform: scale(1.2); }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; padding-bottom: 68px; }
+            .nav-drawer { display: none; }
+            .bottom-nav { display: flex; }
+            .glass-header { left: 0; height: 56px; padding: 0 1rem; }
+            .content { padding: 1rem; }
+            .tile-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="nav-drawer">
+        <div class="nav-logo"><span class="material-symbols-rounded" style="font-size:28px;font-variation-settings:'FILL' 1;">palette</span>Material Design 3</div>
+        <button class="nav-item active" onclick="showPage('home',this)"><span class="material-symbols-rounded">home</span>首页</button>
+        <button class="nav-item" onclick="showPage('components',this)"><span class="material-symbols-rounded">widgets</span>组件库</button>
+        <button class="nav-item" onclick="showPage('settings',this)"><span class="material-symbols-rounded">settings</span>设置</button>
+    </aside>
+
+    <nav class="bottom-nav">
+        <button class="bottom-nav-item active" onclick="showPage('home',this)"><span class="material-symbols-rounded">home</span>首页</button>
+        <button class="bottom-nav-item" onclick="showPage('components',this)"><span class="material-symbols-rounded">widgets</span>组件</button>
+        <button class="bottom-nav-item" onclick="showPage('settings',this)"><span class="material-symbols-rounded">settings</span>设置</button>
+    </nav>
+
+    <div class="main-wrapper">
+        <header class="glass-header">
+            <div class="shimmer"></div><div class="spot"></div><div class="spot"></div><div class="spot"></div>
+            <span class="header-title" id="pageTitle">首页</span>
+            <div class="header-spacer"></div>
+            <div class="theme-pill" onclick="toggleTheme()">
+                <span class="material-symbols-rounded" style="font-size:16px;" id="themeIcon">light_mode</span>
+                <span id="themeLabel">Light</span>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="page active" id="page-home">
+                <h2 style="margin-top:0;">📱 控制中心</h2>
+                <p style="color:var(--md-on-surface-variant);margin-bottom:1rem;font-size:0.85rem;">MD3E 风格控制面板 · 点击切换状态</p>
+                <div class="tile-grid">
+                    <div class="tile active" onclick="this.classList.toggle('active')"><span class="material-symbols-rounded tile-icon">wifi</span><span class="tile-label">Wi-Fi</span><div class="tile-dot"></div></div>
+                    <div class="tile" onclick="this.classList.toggle('active')"><span class="material-symbols-outlined tile-icon">bluetooth</span><span class="tile-label">蓝牙</span><div class="tile-dot"></div></div>
+                    <div class="tile" onclick="this.classList.toggle('active')"><span class="material-symbols-outlined tile-icon">flashlight_on</span><span class="tile-label">手电筒</span><div class="tile-dot"></div></div>
+                    <div class="tile" onclick="this.classList.toggle('active')"><span class="material-symbols-outlined tile-icon">flight</span><span class="tile-label">飞行模式</span><div class="tile-dot"></div></div>
+                    <div class="tile" onclick="this.classList.toggle('active')"><span class="material-symbols-outlined tile-icon">dark_mode</span><span class="tile-label">夜间模式</span><div class="tile-dot"></div></div>
+                    <div class="tile active" onclick="this.classList.toggle('active')"><span class="material-symbols-outlined tile-icon">location_on</span><span class="tile-label">定位</span><div class="tile-dot"></div></div>
+                </div>
+                <div class="card" style="text-align:center;padding:2rem;">
+                    <span class="material-symbols-rounded" style="font-size:4rem;color:var(--md-primary);">palette</span>
+                    <h2>M3 表现力展示 Pro</h2>
+                    <p style="color:var(--md-on-surface-variant);">液态玻璃 · 折射光效 · 涟漪波纹 · 按压动效</p>
+                    <button class="btn btn-outlined" style="margin-top:1rem;" onclick="openDialog()">关于</button>
+                </div>
+            </div>
+
+            <div class="page" id="page-components">
+                <div class="m3-group" style="margin-bottom:2rem;">
+                    <div class="card corner-top">
+                        <h3>文本输入框（填充样式）</h3>
+                        <input type="text" placeholder="在此输入文本内容…" style="height:56px;width:100%;background:var(--md-surface-container-highest);border:none;border-bottom:2px solid var(--md-outline);border-radius:8px 8px 0 0;padding:0 1rem;font-size:1rem;outline:none;font-family:inherit;color:var(--md-on-surface);">
+                    </div>
+                    <div class="card corner-middle">
+                        <h3>开关与复选框</h3>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;">
+                            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                                <div class="switch-row" onclick="toggleSwitch(this)"><span>图标开关（开启）</span><div class="md3-switch-icon active"><div class="switch-thumb"><span class="material-symbols-rounded">check</span></div></div></div>
+                                <div class="switch-row" onclick="toggleSwitch(this)"><span>图标开关（关闭）</span><div class="md3-switch-icon"><div class="switch-thumb"><span class="material-symbols-rounded">close</span></div></div></div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                                <div class="checkbox-row" onclick="toggleCheckbox(this)"><div class="md3-checkbox checked"><span class="material-symbols-rounded">check</span></div><span>复选框选项 1（已选中）</span></div>
+                                <div class="checkbox-row" onclick="toggleCheckbox(this)"><div class="md3-checkbox"><span class="material-symbols-rounded">check</span></div><span>复选框选项 2（未选中）</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card corner-bottom">
+                        <h3>进度指示器与操作按钮</h3>
+                        <div><span style="font-size:0.85rem;">线性进度条：</span><div class="progress-linear"><div class="progress-bar"></div></div></div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+                            <div style="display:flex;align-items:center;gap:0.75rem;"><svg class="progress-circular" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle></svg><span style="font-size:0.9rem;">圆形加载器</span></div>
+                            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                <button class="btn btn-outlined" onclick="openDialog()"><span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span>打开对话框</button>
+                                <button class="btn btn-filled" onclick="handleSubmit(this)"><span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>提交</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h2>表现力列表</h2>
+                <div class="m3-group" style="margin-bottom:1.5rem;">
+                    <div class="m3-list-item corner-top"><div class="list-item-content"><span class="material-symbols-outlined">wifi</span><div style="min-width:0;"><div style="font-weight:500;">无线网络（Wi-Fi）</div><div style="font-size:0.75rem;color:var(--md-on-surface-variant);">顶部容器</div></div></div><div class="md3-switch-icon active" onclick="event.stopPropagation();toggleSwitchDirect(this);"><div class="switch-thumb"><span class="material-symbols-rounded">check</span></div></div></div>
+                    <div class="m3-list-item corner-middle"><div class="list-item-content"><span class="material-symbols-outlined">bluetooth</span><div style="min-width:0;"><div style="font-weight:500;">蓝牙连接</div><div style="font-size:0.75rem;color:var(--md-on-surface-variant);">中间容器</div></div></div><div class="md3-switch-icon" onclick="event.stopPropagation();toggleSwitchDirect(this);"><div class="switch-thumb"><span class="material-symbols-rounded">close</span></div></div></div>
+                    <div class="m3-list-item corner-bottom"><div class="list-item-content"><span class="material-symbols-outlined">notifications</span><div style="min-width:0;"><div style="font-weight:500;">系统通知</div><div style="font-size:0.75rem;color:var(--md-on-surface-variant);">底部容器</div></div></div><div class="md3-switch-icon active" onclick="event.stopPropagation();toggleSwitchDirect(this);"><div class="switch-thumb"><span class="material-symbols-rounded">check</span></div></div></div>
+                </div>
+            </div>
+
+            <div class="page" id="page-settings">
+                <div class="card" style="text-align:center;padding:3rem;">
+                    <span class="material-symbols-rounded" style="font-size:5rem;color:var(--md-primary);">settings</span>
+                    <h2 style="margin-top:1rem;">设置页面</h2>
+                    <p style="color:var(--md-on-surface-variant);">更多设置功能即将推出</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="dialog-overlay" id="dialogOverlay" onclick="if(event.target===this)closeDialog()">
+        <div class="dialog">
+            <h3>关于 M3 展示</h3>
+            <p style="color:var(--md-on-surface-variant);line-height:1.5;margin-top:0.5rem;">Material Design 3 表现力展示页面，包含液态玻璃标题栏、折射光效、涟漪波纹、按压方形圆角动效等。</p>
+            <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1.25rem;">
+                <button class="btn btn-outlined" onclick="closeDialog()">取消</button>
+                <button class="btn btn-filled" onclick="closeDialog()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPage(name, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + name).classList.add('active');
+            if (el) el.classList.add('active');
+            document.getElementById('pageTitle').textContent = {home:'首页',components:'组件库',settings:'设置'}[name]||name;
+        }
+
+        let theme = 'light';
+        function toggleTheme() {
+            theme = theme === 'light' ? 'dark' : 'light';
+            document.documentElement.className = theme;
+            document.getElementById('themeLabel').textContent = theme === 'light' ? 'Light' : 'Dark';
+            document.getElementById('themeIcon').textContent = theme === 'light' ? 'light_mode' : 'dark_mode';
+        }
+
+        function toggleSwitch(row) { toggleSwitchDirect(row.querySelector('.md3-switch-icon')); }
+        function toggleSwitchDirect(el) { el.classList.toggle('active'); const icon = el.querySelector('.material-symbols-rounded'); if (icon) icon.textContent = el.classList.contains('active') ? 'check' : 'close'; }
+        function toggleCheckbox(row) { row.querySelector('.md3-checkbox').classList.toggle('checked'); }
+        function openDialog() { document.getElementById('dialogOverlay').classList.add('open'); document.body.style.overflow = 'hidden'; }
+        function closeDialog() { document.getElementById('dialogOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDialog(); });
+        function handleSubmit(btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:\'FILL\' 1,\'wght\' 600;">check</span> 已提交！';
+            btn.style.backgroundColor = '#4CAF50';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.backgroundColor = ''; }, 2000);
+        }
+
+        function addRipple(el) {
+            el.addEventListener('pointerdown', function(e) {
+                const old = this.querySelector('.btn-ripple'); if (old) old.remove();
+                const r = document.createElement('span'); r.className = 'btn-ripple';
+                const rect = this.getBoundingClientRect();
+                const s = Math.max(rect.width, rect.height) * 1.3;
+                r.style.width = s + 'px'; r.style.height = s + 'px';
+                r.style.left = (e.clientX - rect.left) + 'px';
+                r.style.top = (e.clientY - rect.top) + 'px';
+                this.appendChild(r);
+                requestAnimationFrame(() => r.classList.add('expand'));
+            });
+            el.addEventListener('pointerup', function() {
+                const r = this.querySelector('.btn-ripple.expand');
+                if (r) { r.classList.remove('expand'); r.classList.add('contract'); r.addEventListener('animationend', () => r.remove()); }
+            });
+            el.addEventListener('pointerleave', function() {
+                const r = this.querySelector('.btn-ripple.expand');
+                if (r) { r.classList.remove('expand'); r.classList.add('contract'); r.addEventListener('animationend', () => r.remove()); }
+            });
+        }
+
+        document.querySelectorAll('.btn, .nav-item, .bottom-nav-item, .tile, .switch-row, .checkbox-row, .theme-pill').forEach(addRipple);
+    </script>
+</body>
+</html>
