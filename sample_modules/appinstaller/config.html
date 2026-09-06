@@ -233,6 +233,8 @@
 
     <script>
         var selectedPath = null;
+        var currentAction = 'idle'; // 'install', 'list', 'uninstall', 'idle'
+        var allApps = [];
 
         function appendLog(text, type) {
             var logBox = document.getElementById('logBox');
@@ -276,6 +278,7 @@
             }
             var btn = document.getElementById('installBtn');
             btn.disabled = true;
+            currentAction = 'install';
             setStatus('安装中...', 'status-running');
             appendLog('===================================', 'cmd');
             appendLog('开始安装: ' + selectedPath, 'cmd');
@@ -283,69 +286,25 @@
             window.ShizukuNext.exec('pm install -r "' + selectedPath + '"');
         }
 
-        window.ShizukuNext._onComplete = function(code) {
-            var logBox = document.getElementById('logBox');
-            var span = document.createElement('span');
-            if (code === 0) {
-                span.className = 'log-line-info';
-                span.textContent = '\n[安装成功]\n';
-                setStatus('安装成功', 'status-success');
-                appendLog('安装完成！', 'info');
-            } else {
-                span.className = 'log-line-stderr';
-                span.textContent = '\n[安装失败 退出码: ' + code + ']\n';
-                setStatus('安装失败', 'status-failed');
-            }
-            logBox.appendChild(span);
-            logBox.scrollTop = logBox.scrollHeight;
-            document.getElementById('installBtn').disabled = false;
-        };
-
-        window.ShizukuNext._onOutput = function(text, type) {
-            appendLog(text, type);
-        };
-
-        window.ShizukuNext._onError = function(msg) {
-            appendLog('错误: ' + msg, 'stderr');
-            setStatus('错误', 'status-failed');
-            document.getElementById('installBtn').disabled = false;
-        };
-
         function clearLog() {
             document.getElementById('logBox').innerHTML = '日志已清空\n';
             setStatus('就绪', 'status-idle');
         }
 
         function listApps() {
+            allApps = [];
+            currentAction = 'list';
             appendLog('正在获取应用列表...', 'cmd');
             window.ShizukuNext.exec('pm list packages -3');
         }
 
-        var allApps = [];
-
-        window.ShizukuNext._onOutput = function(text, type) {
-            appendLog(text, type);
-            if (text && text.startsWith('package:')) {
-                var pkg = text.replace('package:', '').trim();
-                allApps.push(pkg);
-            }
-        };
-
-        window.ShizukuNext._onComplete = function(code) {
-            var logBox = document.getElementById('logBox');
-            if (allApps.length > 0) {
-                renderAppList(allApps);
-                appendLog('共找到 ' + allApps.length + ' 个第三方应用', 'info');
-                allApps = [];
-            }
-            var btn = document.getElementById('installBtn');
-            if (btn) btn.disabled = false;
-            if (code === 0) {
-                setStatus('完成', 'status-success');
-            } else if (code !== undefined) {
-                setStatus('失败 (code=' + code + ')', 'status-failed');
-            }
-        };
+        function uninstallApp(pkg) {
+            if (!confirm('确定卸载 ' + pkg + ' ?')) return;
+            currentAction = 'uninstall';
+            setStatus('卸载中...', 'status-running');
+            appendLog('卸载: ' + pkg, 'cmd');
+            window.ShizukuNext.exec('pm uninstall ' + pkg);
+        }
 
         function renderAppList(apps) {
             var container = document.getElementById('appList');
@@ -359,13 +318,6 @@
             });
         }
 
-        function uninstallApp(pkg) {
-            if (!confirm('确定卸载 ' + pkg + ' ?')) return;
-            setStatus('卸载中...', 'status-running');
-            appendLog('卸载: ' + pkg, 'cmd');
-            window.ShizukuNext.exec('pm uninstall ' + pkg);
-        }
-
         function searchApps() {
             var query = document.getElementById('searchInput').value.toLowerCase();
             var items = document.querySelectorAll('.app-item');
@@ -374,6 +326,54 @@
                 item.style.display = name.indexOf(query) !== -1 ? '' : 'none';
             });
         }
+
+        // SINGLE unified handlers
+        window.ShizukuNext.onOutput = function(text, type) {
+            appendLog(text, type);
+            if (currentAction === 'list' && text && text.startsWith('package:')) {
+                var pkg = text.replace('package:', '').trim();
+                allApps.push(pkg);
+            }
+        };
+
+        window.ShizukuNext.onComplete = function(code) {
+            if (currentAction === 'install') {
+                if (code === 0) {
+                    appendLog('\n[安装成功]', 'info');
+                    setStatus('安装成功', 'status-success');
+                } else {
+                    appendLog('\n[安装失败 退出码: ' + code + ']', 'stderr');
+                    setStatus('安装失败', 'status-failed');
+                }
+                document.getElementById('installBtn').disabled = false;
+            } else if (currentAction === 'list') {
+                if (allApps.length > 0) {
+                    renderAppList(allApps);
+                    appendLog('共找到 ' + allApps.length + ' 个第三方应用', 'info');
+                } else {
+                    appendLog('没有找到第三方应用', 'stderr');
+                }
+                setStatus('完成', 'status-success');
+            } else if (currentAction === 'uninstall') {
+                if (code === 0) {
+                    appendLog('\n[卸载成功]', 'info');
+                    setStatus('卸载成功', 'status-success');
+                    // Refresh app list
+                    listApps();
+                } else {
+                    appendLog('\n[卸载失败 退出码: ' + code + ']', 'stderr');
+                    setStatus('卸载失败', 'status-failed');
+                }
+            }
+            currentAction = 'idle';
+        };
+
+        window.ShizukuNext.onError = function(msg) {
+            appendLog('错误: ' + msg, 'stderr');
+            setStatus('错误', 'status-failed');
+            document.getElementById('installBtn').disabled = false;
+            currentAction = 'idle';
+        };
     </script>
 </body>
 </html>

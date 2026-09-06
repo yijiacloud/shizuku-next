@@ -135,67 +135,16 @@ class ModuleConfigActivity : AppBarActivity() {
             return "/data/data/moe.shizuku.privileged.api/files/modules/" + modId
         }
 
-        /**
-         * Prepare module files in a shell-accessible temp directory.
-         * Copies all module files to /data/local/tmp/sn_mod_<id>/ and returns the path.
-         * Call this before executing scripts that reference module files.
-         */
-        @JavascriptInterface
-        fun prepareFiles(): String {
-            try {
-                if (!Shizuku.pingBinder()) return ""
-                val binder = Shizuku.getBinder() ?: return ""
-                val service = moe.shizuku.server.IShizukuService.Stub.asInterface(binder)
-
-                val tempDir = "/data/local/tmp/sn_mod_" + modId
-                runShell(service, "mkdir -p '" + tempDir + "'")
-
-                val moduleDir = File(activity.filesDir, "modules/" + modId)
-                if (moduleDir.exists()) {
-                    moduleDir.walkTopDown().forEach { file ->
-                        if (file.isFile) {
-                            val relPath = file.relativeTo(moduleDir).path
-                            val destPath = tempDir + "/" + relPath
-                            val parentDir = destPath.substring(0, destPath.lastIndexOf('/'))
-                            runShell(service, "mkdir -p '" + parentDir + "'")
-                            copyFileViaStdin(service, destPath, file)
-                            if (relPath.endsWith(".sh") || relPath == "xpad2" || !relPath.contains(".")) {
-                                runShell(service, "chmod 700 '" + destPath + "'")
-                            }
-                        }
-                    }
-                }
-                return tempDir
-            } catch (e: Exception) {
-                Log.e(TAG, "prepareFiles error", e)
-                return ""
-            }
-        }
-
-        @JavascriptInterface
-        fun pickFile() {
-            handler.post {
-                val mime = "*" + "/" + "*"
-                pickFileLauncher?.launch(mime)
-            }
-        }
-
-        @JavascriptInterface
-        fun pickFileWithMime(mime: String) {
-            handler.post {
-                pickFileLauncher?.launch(mime)
-            }
-        }
-
-        /**
-         * Get installed app list as JSON string.
-         * Returns: [{"pkg":"com.example","name":"Example","enabled":true,"icon":"data:image/png;base64,..."}, ...]
+                /**
+         * Get installed app list as JSON string (without icons for performance).
+         * Returns: [{"pkg":"com.example","name":"Example","enabled":true}, ...]
+         * Use getAppIcon(pkg) to get individual icons lazily.
          */
         @JavascriptInterface
         fun getAppList(): String {
             try {
                 val pm = activity.packageManager
-                val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+                val apps = pm.getInstalledApplications(0)
                 val sb = StringBuilder()
                 sb.append("[")
                 var first = true
@@ -207,7 +156,6 @@ class ModuleConfigActivity : AppBarActivity() {
                     val label = try { pm.getApplicationLabel(app).toString() } catch (e: Exception) { app.packageName }
                     sb.append(",\"name\":\"").append(escapeJson(label)).append("\"")
                     sb.append(",\"enabled\":").append(app.enabled)
-                    sb.append(",\"icon\":\"").append(getAppIconBase64(pm, app.packageName)).append("\"")
                     sb.append("}")
                 }
                 sb.append("]")
@@ -218,19 +166,25 @@ class ModuleConfigActivity : AppBarActivity() {
             }
         }
 
-        private fun getAppIconBase64(pm: PackageManager, pkg: String): String {
+        /**
+         * Get a single app icon as base64 data URI (lazy loading).
+         * Returns: "data:image/png;base64,..." or "" if failed.
+         */
+        @JavascriptInterface
+        fun getAppIcon(pkg: String): String {
             try {
+                val pm = activity.packageManager
                 val drawable = pm.getApplicationIcon(pkg)
-                val size = 72
+                val size = 48
                 val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
                 drawable.setBounds(0, 0, size, size)
                 drawable.draw(canvas)
                 val baos = java.io.ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.PNG, 50, baos)
+                bitmap.compress(Bitmap.CompressFormat.PNG, 70, baos)
                 bitmap.recycle()
                 return "data:image/png;base64," + Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-            } catch (e: Exception) {
+            } catch (ex: Exception) {
                 return ""
             }
         }
@@ -362,7 +316,7 @@ class ModuleConfigActivity : AppBarActivity() {
                             runShell(service, "mkdir -p '" + parentDir + "'")
                             copyFileViaStdin(service, destPath, file)
                             if (relPath.endsWith(".sh") || !relPath.contains(".")) {
-                                runShell(service, "chmod 700 '" + destPath + "'")
+                                runShell(service, "chmod 755 '" + destPath + "'")
                             }
                         }
                     }

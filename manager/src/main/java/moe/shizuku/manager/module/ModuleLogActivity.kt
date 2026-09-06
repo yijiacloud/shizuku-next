@@ -129,7 +129,7 @@ class ModuleLogActivity : AppBarActivity() {
                             runShell(service, "mkdir -p '" + parentDir + "'")
                             copyFileViaStdin(service, destPath, file)
                             if (relPath.endsWith(".sh") || relPath == "xpad2" || !relPath.contains(".")) {
-                                runShell(service, "chmod 700 '" + destPath + "'")
+                                runShell(service, "chmod 755 '" + destPath + "'")
                             }
                             handler.post { appendLog("\u590d\u5236\u6587\u4ef6: " + relPath + "\n", COLOR_INFO) }
                         }
@@ -139,7 +139,7 @@ class ModuleLogActivity : AppBarActivity() {
                 // 3. Write script to temp dir
                 val scriptPath = tempDir + "/" + mode + ".sh"
                 copyBytesViaStdin(service, scriptPath, scriptContent.toByteArray())
-                runShell(service, "chmod 700 '" + scriptPath + "'")
+                runShell(service, "chmod 755 '" + scriptPath + "'")
 
                 // 4. Execute script with MODDIR set to temp dir
                 val cmd = "MODDIR='" + tempDir + "' sh '" + scriptPath + "' '" + tempDir + "'"
